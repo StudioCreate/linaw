@@ -1,0 +1,53 @@
+doctype
+html
+  head
+    title LInAW
+    style.
+      body {
+        background: #250733;
+        color: #fff;
+        font-family: sans-serif;
+
+      }
+      h1,h2 {
+        font-weight: lighter;
+      }
+      button {
+        border: 1px solid;
+        padding: 1em;
+        background: none;
+        border-radius: 0;
+        font-size: .5em 1em;
+        margin: 0 .5em .5em 0;
+        color: currentColor;
+        cursor: pointer;
+      }
+      *:focus {
+        outline: 0;
+      }
+      input[type="range"]{
+        color: currentColor;
+        -webkit-appearance: none;
+        background: none;
+        height: 16px;
+        border: 1px solid;
+        border-radius: 16px;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        background: #250733;
+        border: 1px solid;
+        height: 26px;
+        width: 26px;
+        border-radius: 16px;
+        cursor: -webkit-grab;
+      }
+      input[type="range"]::-webkit-slider-thumb:active {
+        cursor: -webkit-grabbing;
+
+      }
+
+  body
+    #LInAW
+    script(src='/linaw.js')

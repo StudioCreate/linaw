@@ -1,0 +1,70 @@
+{
+  "name": "linaw",
+  "version": "0.0.1",
+  "description": "a web technology based controller for my living room",
+  "main": "linaw-server.js",
+  "scripts": {
+    "test": "gulp test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/pixelass/linaw.git"
+  },
+  "keywords": [
+    "sonos",
+    "phillips",
+    "hue",
+    "webOS",
+    "LG",
+    "node",
+    "controller",
+    "remote"
+  ],
+  "author": "Gregor Adams <greg@pixelass.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pixelass/linaw/issues"
+  },
+  "homepage": "https://github.com/pixelass/linaw#readme",
+  "devDependencies": {
+    "babel-core": "^6.6.5",
+    "babel-eslint": "^5.0.0",
+    "babel-loader": "^6.2.4",
+    "babel-plugin-add-module-exports": "^0.1.2",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.6.5",
+    "babel-preset-es2015": "^6.6.0",
+    "babel-preset-es2015-loose": "^7.0.0",
+    "babel-preset-react": "^6.5.0",
+    "babel-preset-stage-1": "^6.5.0",
+    "babelify": "^7.2.0",
+    "browserify": "^13.0.0",
+    "classnames": "^2.2.3",
+    "color": "^0.11.1",
+    "eslint": "^2.3.0",
+    "eslint-plugin-babel": "^3.1.0",
+    "eslint-plugin-flow-vars": "^0.2.1",
+    "eslint-plugin-react": "^4.1.0",
+    "gulp": "^3.9.1",
+    "gulp-livereload": "^3.8.1",
+    "gulp-sourcemaps": "^1.6.0",
+    "node-hue-api": "^2.2.0",
+    "radium": "^0.16.6",
+    "react": "^0.14.7",
+    "react-dom": "^0.14.7",
+    "socket.io-client": "^1.4.5",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0",
+    "watchify": "^3.7.0",
+    "webpack": "^1.12.14",
+    "websocket": "^1.0.22"
+  },
+  "dependencies": {
+    "body-parser": "^1.15.0",
+    "express": "^4.13.4",
+    "jade": "^1.11.0",
+    "node-static": "^0.7.7",
+    "socket.io": "^1.4.5",
+    "sonos-system": "https://github.com/pixelass/node-sonos-discovery/archive/test.tar.gz"
+  }
+}
