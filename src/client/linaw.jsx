@@ -163,19 +163,19 @@ class LInAW extends React.Component {
                    min={ 0 }
                    max={ 65535 }
                    defaultValue={ 65535 / 2 }
-                   onChange={ this.setHue } />
+                   onMouseUp={ this.setHue } />
             <h2>s</h2>
             <input type='range'
                    min={ 0 }
                    max={ 100 }
                    defaultValue={ 50 }
-                   onChange={ this.setSaturation } />
+                   onMouseUp={ this.setSaturation } />
             <h2>b</h2>
             <input type='range'
                    min={ 0 }
                    max={ 100 }
                    defaultValue={ 50 }
-                   onChange={ this.setBrightness } />
+                   onMouseUp={ this.setBrightness } />
           </div>
           );
         break;
