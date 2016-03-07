@@ -57,6 +57,7 @@ class LInAW extends React.Component {
     // bind methods
     this.lightsOn = this.lightsOn.bind(this);
     this.lightsOff = this.lightsOff.bind(this);
+    this.setColorState = this.setColorState.bind(this);
     this.setHue = this.setHue.bind(this);
     this.setBrightness = this.setBrightness.bind(this);
     this.setSaturation = this.setSaturation.bind(this);
@@ -70,7 +71,35 @@ class LInAW extends React.Component {
 
     // set helpers
     this.hueRange = 65535;
+    this.backgroundColor = '#010102';
+    this.color = '#fefefe';
 
+  }
+
+  componentWillMount(){
+    socket.on('lights',(data)=>{
+      console.log(data)
+      let lights = this.state.lights;
+      data.forEach((light,index)=>{
+        let state = light.state;
+        lights[light.id].on = state.on;
+        lights[light.id].hue = state.hue;
+        lights[light.id].saturation = state.sat;
+        lights[light.id].brightness = state.bri;
+
+      });
+      this.setState({lights: lights});
+    });
+  }
+
+  /**
+   * no operation
+   */
+  setColorState(id,prop,e){
+   let lights = this.state.lights;
+    let value = e.target.value;
+    lights[id][prop] = value;
+    this.setState({lights: lights})
   }
 
   /**
@@ -196,8 +225,8 @@ class LInAW extends React.Component {
         for (let i = 1; i <= 2; i++) {
           let color = `
           ${this.state.lights[i].hue/this.hueRange*360},
-          ${this.state.lights[i].saturation}%,
-          ${this.state.lights[i].brightness/10*9}%`;
+          ${this.state.lights[i].saturation/255*100}%,
+          ${this.state.lights[i].brightness/255*50 + 25}%`;
           lights.push(
             <div key={ i }
                  style={{padding: '10px'}}>
@@ -206,21 +235,20 @@ class LInAW extends React.Component {
                   {
                     display: 'inline-block',
                     margin: '.5em',
-                    height: '1em',
-                    width: '1em',
+                    height: '2em',
+                    width: '2em',
                     borderRadius: '100%',
-                    boxShadow: `0 0 3px 1px hsla(${color},0.5)`,
                     border: '1px solid currentColor',
                     backgroundColor: `hsl(${color})`,
-                    color: `hsl(0,0%,${this.state.lights[i].brightness > 70 ? 30 : 100}%)`
+                    color: this.color
                   }
                 }/>
               </h3>
               <button onClick={ this.lightsOn.bind(this, i) }
                       style={
                         {
-                          backgroundColor: this.state.lights[i].on ? 'black' : '#f8f8fa',
-                          color: this.state.lights[i].on ? 'white' : 'black'
+                          backgroundColor: this.state.lights[i].on ? this.color :  this.backgroundColor,
+                          color: this.state.lights[i].on ? this.backgroundColor : this.color
                         }
                       }>
                 on
@@ -228,8 +256,8 @@ class LInAW extends React.Component {
               <button onClick={ this.lightsOff.bind(this, i) }
                       style={
                         {
-                          backgroundColor: this.state.lights[i].on ? '#f8f8fa' : 'black',
-                          color: this.state.lights[i].on ? 'black' : 'white',
+                          backgroundColor: this.state.lights[i].on ? this.backgroundColor : this.color,
+                          color: this.state.lights[i].on ? this.color :this.backgroundColor,
                         }
                       }>
                 off
@@ -238,19 +266,22 @@ class LInAW extends React.Component {
               <input type='range'
                      min={ 0 }
                      max={ this.hueRange }
-                     defaultValue={ this.state.lights[i].hue }
+                     value={ this.state.lights[i].hue }
+                     onChange={this.setColorState.bind(this, i, 'hue')}
                      onMouseUp={ this.setHue.bind(this, i) } />
               <h3>s</h3>
               <input type='range'
                      min={ 0 }
-                     max={ 100 }
-                     defaultValue={ this.state.lights[i].saturation }
+                     max={ 255 }
+                     value={ this.state.lights[i].saturation }
+                     onChange={this.setColorState.bind(this, i, 'saturation')}
                      onMouseUp={ this.setSaturation.bind(this, i) } />
               <h3>b</h3>
               <input type='range'
                      min={ 0 }
-                     max={ 100 }
-                     defaultValue={ this.state.lights[i].brightness }
+                     max={ 255 }
+                     value={ this.state.lights[i].brightness }
+                     onChange={this.setColorState.bind(this, i, 'brightness')}
                      onMouseUp={ this.setBrightness.bind(this, i) } />
             </div>
           );
@@ -296,7 +327,19 @@ class LInAW extends React.Component {
   render() {
     let modules = this.getModules();
     return (
-      <div className={ 'LInaW-client' }>
+      <div className={ 'LInaW-client' }
+           style={
+            {
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              backgroundColor: this.backgroundColor,
+              color: this.color,
+            }
+          }>
+        <h1>LInAW</h1>
         { modules }
       </div>
       );
