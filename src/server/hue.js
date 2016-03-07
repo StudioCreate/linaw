@@ -63,9 +63,15 @@ function displayLights(result) {
   hueLights = result.lights;
 
   // create a state for each light
-  hueLights.forEach(function(light,index){
+  hueLights.forEach(function(light, index) {
+    console.log(light)
     state[light.id] = lightState.create()
-  })
+  });
+  masterSocket.then(function(socket) {
+    socket.emit('lights', hueLights);
+  });
+
+  
 }
 
 /**
@@ -186,28 +192,30 @@ function getHueConfig(ip, user) {
 
 // start connection
 hue.nupnpSearch().then(getHueBridge).done();
+var masterSocket = new Promise(function(resolve, reject) {
+  io.on('connection', function(socket) {
+    resolve(socket);
 
-// handle io events
-io.on('connection', function(socket) {
-  console.log('connected');
-  socket.on('lights', function(id, value) {
-    if (!hueLights) {
-      return
-    }
-    if (value === 'off') {
-      turnOff(id);
-    } else if (value === 'on') {
-      turnOn(id);
-    } else if (typeof value === 'object') {
-      if (value.type === 'hue') {
-        setHue(id, value.val);
+    socket.on('lights', function(id, value) {
+      if (!hueLights) {
+        return
       }
-      if (value.type === 'brightness') {
-        setBrightness(id, value.val);
+      if (value === 'off') {
+        turnOff(id);
+      } else if (value === 'on') {
+        turnOn(id);
+      } else if (typeof value === 'object') {
+        if (value.type === 'hue') {
+          setHue(id, value.val);
+        }
+        if (value.type === 'brightness') {
+          setBrightness(id, value.val);
+        }
+        if (value.type === 'saturation') {
+          setSaturation(id, value.val);
+        }
       }
-      if (value.type === 'saturation') {
-        setSaturation(id, value.val);
-      }
-    }
+    });
   });
-});
+
+}); // handle io events
