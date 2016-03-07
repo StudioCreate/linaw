@@ -64,14 +64,12 @@ function displayLights(result) {
 
   // create a state for each light
   hueLights.forEach(function(light, index) {
-    console.log(light)
+    //console.log(light.state)
     state[light.id] = lightState.create()
   });
   masterSocket.then(function(socket) {
     socket.emit('lights', hueLights);
   });
-
-  
 }
 
 /**
@@ -79,7 +77,7 @@ function displayLights(result) {
  * @param  {Object} result the config
  */
 function displayConfig(result) {
-  console.log(result);
+  //console.log(result);
 }
 
 /**
@@ -94,6 +92,9 @@ function displayError(err) {
  * no operation
  */
 function noop() {
+  hueUserApi.lights()
+    .then(displayLights)
+    .done();
 }
 
 /**
@@ -191,32 +192,38 @@ function getHueConfig(ip, user) {
 }
 
 // start connection
-hue.nupnpSearch().then(getHueBridge).done();
 var masterSocket = new Promise(function(resolve, reject) {
   io.on('connection', function(socket) {
-    resolve(socket);
+
+    hue.nupnpSearch().then(getHueBridge).done();
     socket.emit('lights', hueLights);
-
-    socket.on('lights', function(id, value) {
-      if (!hueLights) {
-        return
-      }
-      if (value === 'off') {
-        turnOff(id);
-      } else if (value === 'on') {
-        turnOn(id);
-      } else if (typeof value === 'object') {
-        if (value.type === 'hue') {
-          setHue(id, value.val);
-        }
-        if (value.type === 'brightness') {
-          setBrightness(id, value.val);
-        }
-        if (value.type === 'saturation') {
-          setSaturation(id, value.val);
-        }
-      }
-    });
+    resolve(socket);
   });
+});
 
-}); // handle io events
+masterSocket.then(function(socket) {
+  // handle io events
+  socket.on('lights', function(id, value) {
+
+    if (!hueLights) {
+      return
+    }
+
+    if (value === 'off') {
+      turnOff(id);
+    } else if (value === 'on') {
+      turnOn(id);
+    } else if (typeof value === 'object') {
+
+      if (value.type === 'hue') {
+        setHue(id, value.val);
+      } else if (value.type === 'brightness') {
+        setBrightness(id, value.val);
+      } else if (value.type === 'saturation') {
+        setSaturation(id, value.val);
+      }
+    }
+  });
+});
+
+

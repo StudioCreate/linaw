@@ -30,18 +30,6 @@ const dummyProps = {
     }
   },
   lights: {
-    1: {
-      hue: 0,
-      saturation: 0,
-      brightness: 0,
-      on: false,
-    },
-    2: {
-      hue: 0,
-      saturation: 0,
-      brightness: 0,
-      on: false,
-    }
   }
 };
 
@@ -62,6 +50,7 @@ class LInAW extends React.Component {
     this.setBrightness = this.setBrightness.bind(this);
     this.setSaturation = this.setSaturation.bind(this);
     this.setAudioVolume = this.setAudioVolume.bind(this);
+    this.handleAudio = this.handleAudio.bind(this);
 
     // allow and set initial state
     this.state = {
@@ -81,6 +70,8 @@ class LInAW extends React.Component {
       let lights = this.state.lights;
       data.forEach((light, index) => {
         let state = light.state;
+        lights[light.id] = lights[light.id] || {};
+        lights[light.id].name = light.name;
         lights[light.id].on = state.on;
         lights[light.id].hue = state.hue;
         lights[light.id].saturation = state.sat;
@@ -177,6 +168,13 @@ class LInAW extends React.Component {
   setAudioVolume(player, e) {
     socket.emit('volume', player, e.target.value);
   }
+  /**
+   * set audio volume
+   */
+  handleAudio(player, type, e) {
+    console.log(player,type)
+    socket.emit(type, player);
+  }
 
   /**
    * get the module
@@ -208,13 +206,15 @@ class LInAW extends React.Component {
         return (
           <div key={ data.module.id }>
             <h2>Audio (Sonos)</h2>
-            <h3>Play:5</h3>
+            <button onClick={this.handleAudio.bind(this,0,'play')}>play</button>
+            <button onClick={this.handleAudio.bind(this,0,'pause')}>pause</button>
+            <h3>Play:3</h3>
             <input type='range'
                    min={ 0 }
                    max={ 100 }
                    defaultValue={ 10 }
                    onChange={ this.setAudioVolume.bind(this, 1) } />
-            <h3>Play:3</h3>
+            <h3>Play:5</h3>
             <input type='range'
                    min={ 0 }
                    max={ 100 }
@@ -227,48 +227,46 @@ class LInAW extends React.Component {
       // LIGHT
       case 'hue':
         let lights = [];
-        let lightNames = {
-          1: 'Left',
-          2: 'Right'
-        }
-        for (let i = 1; i <= 2; i++) {
+        for (let light in this.state.lights) {
+          let oneLight = this.state.lights[light];
           let color = `
-          ${this.state.lights[i].hue / this.hueRange * 360},
-          ${this.state.lights[i].saturation / 255 * 100}%,
-          ${this.state.lights[i].brightness / 255 * 50 + 25}%`;
+          ${oneLight.hue / this.hueRange * 360},
+          ${oneLight.saturation / 255 * 100}%,
+          ${oneLight.brightness / 255 * 50 + 25}%`;
+
           lights.push(
-            <div key={ i }
+            <div key={ light }
                  style={ {  padding: '10px'} }>
-              <h3>{ lightNames[i] } <span style={ {  display: 'inline-block',  margin: '.5em',  height: '2em',  width: '2em',  borderRadius: '100%',  border: '1px solid currentColor',  backgroundColor: `hsl(${color})`,  color: this.color} }/></h3>
-              <button onClick={ this.lightsOn.bind(this, i) }
-                      style={ {  backgroundColor: this.state.lights[i].on ? this.color : this.backgroundColor,  color: this.state.lights[i].on ? this.backgroundColor : this.color} }>
+              <h3>{ oneLight.name } <span style={ {  display: 'inline-block',  margin: '.5em',  height: '2em',  width: '2em',  borderRadius: '100%',  border: '1px solid currentColor',  backgroundColor: `hsl(${color})`,  color: this.color} }/></h3>
+              <button onClick={ this.lightsOn.bind(this, light) }
+                      style={ {  backgroundColor: oneLight.on ? this.color : this.backgroundColor,  color: oneLight.on ? this.backgroundColor : this.color} }>
                 on
               </button>
-              <button onClick={ this.lightsOff.bind(this, i) }
-                      style={ {  backgroundColor: this.state.lights[i].on ? this.backgroundColor : this.color,  color: this.state.lights[i].on ? this.color : this.backgroundColor,} }>
+              <button onClick={ this.lightsOff.bind(this, light) }
+                      style={ {  backgroundColor: oneLight.on ? this.backgroundColor : this.color,  color: oneLight.on ? this.color : this.backgroundColor,} }>
                 off
               </button>
               <h3>h</h3>
               <input type='range'
                      min={ 0 }
                      max={ this.hueRange }
-                     value={ this.state.lights[i].hue }
-                     onChange={ this.setColorState.bind(this, i, 'hue') }
-                     onMouseUp={ this.setHue.bind(this, i) } />
+                     value={ oneLight.hue }
+                     onChange={ this.setColorState.bind(this, light, 'hue') }
+                     onMouseUp={ this.setHue.bind(this, light) } />
               <h3>s</h3>
               <input type='range'
                      min={ 0 }
                      max={ 255 }
-                     value={ this.state.lights[i].saturation }
-                     onChange={ this.setColorState.bind(this, i, 'saturation') }
-                     onMouseUp={ this.setSaturation.bind(this, i) } />
+                     value={ oneLight.saturation }
+                     onChange={ this.setColorState.bind(this, light, 'saturation') }
+                     onMouseUp={ this.setSaturation.bind(this, light) } />
               <h3>b</h3>
               <input type='range'
                      min={ 0 }
                      max={ 255 }
-                     value={ this.state.lights[i].brightness }
-                     onChange={ this.setColorState.bind(this, i, 'brightness') }
-                     onMouseUp={ this.setBrightness.bind(this, i) } />
+                     value={ oneLight.brightness }
+                     onChange={ this.setColorState.bind(this, light, 'brightness') }
+                     onMouseUp={ this.setBrightness.bind(this, light) } />
             </div>
           );
         }

@@ -28,12 +28,22 @@ var discovery = new SonosDiscovery(settings);
 
 // once the topology-change event has been fired the players should be visible
 discovery.on('topology-change', function() {
-  console.log(discovery)
+  //console.log(discovery)
 });
 
 // connect via sockets
 io.on('connection', function(socket) {
   socket.on('volume', function(player, value) {
     discovery.players[player].setVolume(value)
+  });
+  socket.on('play', function(player) {
+    console.log('>>>>>>>>>     play    <<<<<<<<<')
+    var player = discovery.getPlayer('PLAY:5')/*for now play:5 is always the master discovery.players[player].roomName*/
+    player.play();
+  });
+  socket.on('pause', function(player) {
+    console.log('>>>>>>>>>     pause   <<<<<<<<<')
+    var player = discovery.getPlayer('PLAY:5')/*for now play:5 is always the master discovery.players[player].roomName*/
+    player.pause()
   });
 });
