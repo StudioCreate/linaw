@@ -94,7 +94,10 @@ class LInAW extends React.Component {
   }
 
   /**
-   * no operation
+   * set the internal state of the slider values
+   * @param {String,Number} id   the light id
+   * @param {String}        prop the lightProperty to change[description]
+   * @param {Event}         e    the event that triggered the method
    */
   setColorState(id, prop, e) {
     let lights = this.state.lights;
@@ -130,15 +133,12 @@ class LInAW extends React.Component {
   }
 
   /**
-   * set light hue
+   * send hue val to hardware
+   * @param {String,Number} id the light id
+   * @param {Event}         e  the event that triggered the method
    */
   setHue(id, e) {
-    let lights = this.state.lights;
     let value = e.target.value;
-    lights[id].hue = value;
-    this.setState({
-      lights: lights
-    })
     socket.emit('lights', id, {
       type: 'hue',
       val: value
@@ -146,15 +146,12 @@ class LInAW extends React.Component {
   }
 
   /**
-   * set light brightness
+   * send bri val to hardware
+   * @param {String,Number} id the light id
+   * @param {Event}         e  the event that triggered the method
    */
   setBrightness(id, e) {
-    let lights = this.state.lights;
     let value = e.target.value;
-    lights[id].brightness = value;
-    this.setState({
-      lights: lights
-    })
     socket.emit('lights', id, {
       type: 'brightness',
       val: value
@@ -162,15 +159,12 @@ class LInAW extends React.Component {
   }
 
   /**
-   * set light saturation
+   * send sat val to hardware
+   * @param {String,Number} id the light id
+   * @param {Event}         e  the event that triggered the method
    */
   setSaturation(id, e) {
-    let lights = this.state.lights;
     let value = e.target.value;
-    lights[id].saturation = value;
-    this.setState({
-      lights: lights
-    })
     socket.emit('lights', id, {
       type: 'saturation',
       val: value
