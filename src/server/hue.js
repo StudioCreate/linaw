@@ -33,7 +33,7 @@ var hueUserID = '3f65cc39239005b736da6e7d1bad0ebb';
 var hueUser = 'LInAW';
 
 // create an initital state
-var state = lightState.create();
+var state = {};
 
 // create a global api
 var hueUserApi;
@@ -61,6 +61,11 @@ function displayUserResult(result) {
 function displayLights(result) {
   // the lights array is the value of the `lights` property
   hueLights = result.lights;
+
+  // create a state for each light
+  hueLights.forEach(function(light,index){
+    state[light.id] = lightState.create()
+  })
 }
 
 /**
@@ -91,7 +96,7 @@ function noop() {
  * @param {Number, String} hue hue value (range [0 - 65535])
  */
 function setHue(id, hue) {
-  hueUserApi.setLightState(id, state.hue(hue))
+  hueUserApi.setLightState(id, state[id].hue(hue))
     .then(noop)
     .done();
 }
@@ -102,7 +107,7 @@ function setHue(id, hue) {
  * @param {Number, String} saturation saturation value (range [0 - 100])
  */
 function setSaturation(id, saturation) {
-  hueUserApi.setLightState(id, state.saturation(saturation))
+  hueUserApi.setLightState(id, state[id].saturation(saturation))
     .then(noop)
     .done();
 }
@@ -113,7 +118,7 @@ function setSaturation(id, saturation) {
  * @param {Number, String} brightness brightness value (range [0 - 100])
  */
 function setBrightness(id, brightness) {
-  hueUserApi.setLightState(id, state.brightness(brightness))
+  hueUserApi.setLightState(id, state[id].brightness(brightness))
     .then(noop)
     .done();
 }
@@ -123,7 +128,7 @@ function setBrightness(id, brightness) {
  * @param {Number, String} id id of the lamp
  */
 function turnOn(id) {
-  hueUserApi.setLightState(id, state.on())
+  hueUserApi.setLightState(id, state[id].on())
     .then(noop)
     .done();
 }
@@ -133,7 +138,7 @@ function turnOn(id) {
  * @param {Number, String} id id of the lamp
  */
 function turnOff(id) {
-  hueUserApi.setLightState(id, state.off())
+  hueUserApi.setLightState(id, state[id].off())
     .then(noop)
     .done();
 }
@@ -185,30 +190,24 @@ hue.nupnpSearch().then(getHueBridge).done();
 // handle io events
 io.on('connection', function(socket) {
   console.log('connected');
-  socket.on('lights', function(value) {
+  socket.on('lights', function(id, value) {
     if (!hueLights) {
       return
     }
     if (value === 'off') {
-      hueLights.forEach(function(light, index) {
-        turnOff(light.id);
-      });
+      turnOff(id);
     } else if (value === 'on') {
-      hueLights.forEach(function(light, index) {
-        turnOn(light.id);
-      });
+      turnOn(id);
     } else if (typeof value === 'object') {
-      hueLights.forEach(function(light, index) {
-        if (value.type === 'hue') {
-          setHue(light.id, value.val);
-        }
-        if (value.type === 'brightness') {
-          setBrightness(light.id, value.val);
-        }
-        if (value.type === 'saturation') {
-          setSaturation(light.id, value.val);
-        }
-      });
+      if (value.type === 'hue') {
+        setHue(id, value.val);
+      }
+      if (value.type === 'brightness') {
+        setBrightness(id, value.val);
+      }
+      if (value.type === 'saturation') {
+        setSaturation(id, value.val);
+      }
     }
   });
 });

@@ -57,22 +57,22 @@ class LInAW extends React.Component {
   /**
    * turn lights on
    */
-  lightsOn() {
-    socket.emit('lights', 'on');
+  lightsOn(id) {
+    socket.emit('lights', id, 'on');
   }
 
   /**
    * turn lights off
    */
-  lightsOff() {
-    socket.emit('lights', 'off');
+  lightsOff(id) {
+    socket.emit('lights', id, 'off');
   }
 
   /**
    * set light hue
    */
-  setHue(e) {
-    socket.emit('lights', {
+  setHue(id, e) {
+    socket.emit('lights', id, {
       type: 'hue',
       val: e.target.value
     });
@@ -81,8 +81,8 @@ class LInAW extends React.Component {
   /**
    * set light brightness
    */
-  setBrightness(e) {
-    socket.emit('lights', {
+  setBrightness(id, e) {
+    socket.emit('lights', id, {
       type: 'brightness',
       val: e.target.value
     });
@@ -91,8 +91,8 @@ class LInAW extends React.Component {
   /**
    * set light saturation
    */
-  setSaturation(e) {
-    socket.emit('lights', {
+  setSaturation(id, e) {
+    socket.emit('lights', id, {
       type: 'saturation',
       val: e.target.value
     });
@@ -122,7 +122,7 @@ class LInAW extends React.Component {
       case 'webos:2.0':
         return (
           <div key={ data.module.id }>
-            <h1>TV (LG webOS 2.0)</h1>
+            <h2>TV (LG webOS 2.0)</h2>
           </div>
           );
         break;
@@ -131,51 +131,68 @@ class LInAW extends React.Component {
       case 'sonos':
         return (
           <div key={ data.module.id }>
-            <h1>Audio (Sonos)</h1>
-            <h2>volume</h2>
-            <input type='range'
-                   min={ 0 }
-                   max={ 100 }
-                   defaultValue={ 10 }
-                   onChange={ this.setAudioVolume.bind(this, 0) } />
+            <h2>Audio (Sonos)</h2>
+            <h3>Play:5</h3>
             <input type='range'
                    min={ 0 }
                    max={ 100 }
                    defaultValue={ 10 }
                    onChange={ this.setAudioVolume.bind(this, 1) } />
+            <h3>Play:3</h3>
+            <input type='range'
+                   min={ 0 }
+                   max={ 100 }
+                   defaultValue={ 10 }
+                   onChange={ this.setAudioVolume.bind(this, 0) } />
           </div>
           );
         break;
 
       // LIGHT
       case 'hue':
+        let lights = [];
+        let lightNames = {
+          1: 'Left',
+          2: 'Right'
+        }
+        for (let i = 1; i <= 2; i++) {
+          lights.push(
+            <div key={ i }
+                 style={{padding: '10px'}}>
+              <h3>{ lightNames[i] }</h3>
+              <button onClick={ this.lightsOn.bind(this, i) }>
+                on
+              </button>
+              <button onClick={ this.lightsOff.bind(this, i) }>
+                off
+              </button>
+              <h3>h</h3>
+              <input type='range'
+                     min={ 0 }
+                     max={ 65535 }
+                     defaultValue={ 65535 / 2 }
+                     onMouseUp={ this.setHue.bind(this, i) } />
+              <h3>s</h3>
+              <input type='range'
+                     min={ 0 }
+                     max={ 100 }
+                     defaultValue={ 50 }
+                     onMouseUp={ this.setSaturation.bind(this, i) } />
+              <h3>b</h3>
+              <input type='range'
+                     min={ 0 }
+                     max={ 100 }
+                     defaultValue={ 50 }
+                     onMouseUp={ this.setBrightness.bind(this, i) } />
+            </div>
+          );
+        }
         return (
           <div key={ data.module.id }>
-            <h1>Lights (Phillips hue)</h1>
-            <button onClick={ this.lightsOn }>
-              on
-            </button>
-            <button onClick={ this.lightsOff }>
-              off
-            </button>
-            <h2>h</h2>
-            <input type='range'
-                   min={ 0 }
-                   max={ 65535 }
-                   defaultValue={ 65535 / 2 }
-                   onMouseUp={ this.setHue } />
-            <h2>s</h2>
-            <input type='range'
-                   min={ 0 }
-                   max={ 100 }
-                   defaultValue={ 50 }
-                   onMouseUp={ this.setSaturation } />
-            <h2>b</h2>
-            <input type='range'
-                   min={ 0 }
-                   max={ 100 }
-                   defaultValue={ 50 }
-                   onMouseUp={ this.setBrightness } />
+            <h2>Lights (Phillips hue)</h2>
+            <div style={{display: 'flex'}}>
+              { lights }
+            </div>
           </div>
           );
         break;

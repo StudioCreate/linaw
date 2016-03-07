@@ -4,13 +4,16 @@ html
     title LInAW
     style.
       body {
-        background: #250733;
+        background-color: #121212;
         color: #fff;
         font-family: sans-serif;
-
+        height: 100vh;
+        margin: 0;
       }
-      h1,h2 {
+      h1,h2,h3 {
         font-weight: lighter;
+        margin: 0.5em 0;
+        line-height: 1;
       }
       button {
         border: 1px solid;
@@ -30,17 +33,18 @@ html
         -webkit-appearance: none;
         background: none;
         height: 16px;
+        width: 300px;
         border: 1px solid;
         border-radius: 16px;
         cursor: pointer;
       }
       input[type="range"]::-webkit-slider-thumb {
         -webkit-appearance: none;
-        background: #250733;
+        background: #121212;
         border: 1px solid;
-        height: 26px;
-        width: 26px;
-        border-radius: 16px;
+        height: 36px;
+        width: 36px;
+        border-radius: 36px;
         cursor: -webkit-grab;
       }
       input[type="range"]::-webkit-slider-thumb:active {
@@ -49,5 +53,6 @@ html
       }
 
   body
+    h1 LInAW
     #LInAW
     script(src='/linaw.js')
