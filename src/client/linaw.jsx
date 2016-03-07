@@ -28,6 +28,20 @@ const dummyProps = {
         id: 'hue'
       }
     }
+  },
+  lights: {
+    1: {
+      hue: 0,
+      saturation: 0,
+      brightness: 0,
+      on: false,
+    },
+    2: {
+      hue: 0,
+      saturation: 0,
+      brightness: 0,
+      on: false,
+    }
   }
 };
 
@@ -50,14 +64,22 @@ class LInAW extends React.Component {
 
     // allow and set initial state
     this.state = {
-      modules: dummyProps.modules
+      modules: dummyProps.modules,
+      lights: dummyProps.lights
     }
+
+    // set helpers
+    this.hueRange = 65535;
+
   }
 
   /**
    * turn lights on
    */
   lightsOn(id) {
+    let lights = this.state.lights;
+    lights[id].on = true;
+    this.setState({lights: lights})
     socket.emit('lights', id, 'on');
   }
 
@@ -65,6 +87,9 @@ class LInAW extends React.Component {
    * turn lights off
    */
   lightsOff(id) {
+    let lights = this.state.lights;
+    lights[id].on = false;
+    this.setState({lights: lights});
     socket.emit('lights', id, 'off');
   }
 
@@ -72,9 +97,13 @@ class LInAW extends React.Component {
    * set light hue
    */
   setHue(id, e) {
+    let lights = this.state.lights;
+    let value = e.target.value;
+    lights[id].hue = value;
+    this.setState({lights: lights})
     socket.emit('lights', id, {
       type: 'hue',
-      val: e.target.value
+      val: value
     });
   }
 
@@ -82,9 +111,13 @@ class LInAW extends React.Component {
    * set light brightness
    */
   setBrightness(id, e) {
+    let lights = this.state.lights;
+    let value = e.target.value;
+    lights[id].brightness = value;
+    this.setState({lights: lights})
     socket.emit('lights', id, {
       type: 'brightness',
-      val: e.target.value
+      val: value
     });
   }
 
@@ -92,9 +125,13 @@ class LInAW extends React.Component {
    * set light saturation
    */
   setSaturation(id, e) {
+    let lights = this.state.lights;
+    let value = e.target.value;
+    lights[id].saturation = value;
+    this.setState({lights: lights})
     socket.emit('lights', id, {
       type: 'saturation',
-      val: e.target.value
+      val: value
     });
   }
 
@@ -123,6 +160,7 @@ class LInAW extends React.Component {
         return (
           <div key={ data.module.id }>
             <h2>TV (LG webOS 2.0)</h2>
+            <p>app not configured</p>
           </div>
           );
         break;
@@ -156,33 +194,63 @@ class LInAW extends React.Component {
           2: 'Right'
         }
         for (let i = 1; i <= 2; i++) {
+          let color = `
+          ${this.state.lights[i].hue/this.hueRange*360},
+          ${this.state.lights[i].saturation}%,
+          ${this.state.lights[i].brightness/10*9}%`;
           lights.push(
             <div key={ i }
                  style={{padding: '10px'}}>
-              <h3>{ lightNames[i] }</h3>
-              <button onClick={ this.lightsOn.bind(this, i) }>
+              <h3>{ lightNames[i] }
+                <span style={
+                  {
+                    display: 'inline-block',
+                    margin: '.5em',
+                    height: '1em',
+                    width: '1em',
+                    borderRadius: '100%',
+                    boxShadow: `0 0 3px 1px hsla(${color},0.5)`,
+                    border: '1px solid currentColor',
+                    backgroundColor: `hsl(${color})`,
+                    color: `hsl(0,0%,${this.state.lights[i].brightness > 70 ? 30 : 100}%)`
+                  }
+                }/>
+              </h3>
+              <button onClick={ this.lightsOn.bind(this, i) }
+                      style={
+                        {
+                          backgroundColor: this.state.lights[i].on ? 'black' : '#f8f8fa',
+                          color: this.state.lights[i].on ? 'white' : 'black'
+                        }
+                      }>
                 on
               </button>
-              <button onClick={ this.lightsOff.bind(this, i) }>
+              <button onClick={ this.lightsOff.bind(this, i) }
+                      style={
+                        {
+                          backgroundColor: this.state.lights[i].on ? '#f8f8fa' : 'black',
+                          color: this.state.lights[i].on ? 'black' : 'white',
+                        }
+                      }>
                 off
               </button>
               <h3>h</h3>
               <input type='range'
                      min={ 0 }
-                     max={ 65535 }
-                     defaultValue={ 65535 / 2 }
+                     max={ this.hueRange }
+                     defaultValue={ this.state.lights[i].hue }
                      onMouseUp={ this.setHue.bind(this, i) } />
               <h3>s</h3>
               <input type='range'
                      min={ 0 }
                      max={ 100 }
-                     defaultValue={ 50 }
+                     defaultValue={ this.state.lights[i].saturation }
                      onMouseUp={ this.setSaturation.bind(this, i) } />
               <h3>b</h3>
               <input type='range'
                      min={ 0 }
                      max={ 100 }
-                     defaultValue={ 50 }
+                     defaultValue={ this.state.lights[i].brightness }
                      onMouseUp={ this.setBrightness.bind(this, i) } />
             </div>
           );

@@ -4,23 +4,25 @@ html
     title LInAW
     style.
       body {
-        background-color: #121212;
-        color: #fff;
+        background-color: #f8f8fa;
+        color: #000;
         font-family: sans-serif;
         height: 100vh;
         margin: 0;
       }
-      h1,h2,h3 {
+      h1,h2,h3,h4 {
         font-weight: lighter;
         margin: 0.5em 0;
         line-height: 1;
+        display: flex;
+        align-items: center;
       }
       button {
         border: 1px solid;
         padding: 1em;
         background: none;
-        border-radius: 0;
-        font-size: .5em 1em;
+        border-radius: 3px;
+        font-size: .25em 1em;
         margin: 0 .5em .5em 0;
         color: currentColor;
         cursor: pointer;
@@ -32,19 +34,20 @@ html
         color: currentColor;
         -webkit-appearance: none;
         background: none;
-        height: 16px;
+        height: 4px;
         width: 300px;
         border: 1px solid;
-        border-radius: 16px;
+        border-radius: 4px;
         cursor: pointer;
+        -webkit-user-select: none;
       }
       input[type="range"]::-webkit-slider-thumb {
         -webkit-appearance: none;
-        background: #121212;
+        background: #f8f8fa;
         border: 1px solid;
-        height: 36px;
-        width: 36px;
-        border-radius: 36px;
+        height: 16px;
+        width: 16px;
+        border-radius: 16px;
         cursor: -webkit-grab;
       }
       input[type="range"]::-webkit-slider-thumb:active {
