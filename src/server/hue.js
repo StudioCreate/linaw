@@ -195,6 +195,7 @@ hue.nupnpSearch().then(getHueBridge).done();
 var masterSocket = new Promise(function(resolve, reject) {
   io.on('connection', function(socket) {
     resolve(socket);
+    socket.emit('lights', hueLights);
 
     socket.on('lights', function(id, value) {
       if (!hueLights) {
