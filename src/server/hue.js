@@ -99,33 +99,44 @@ function noop() {
 
 /**
  * set the hue value of a speciffic light
- * @param {Number, String} id  id of the lamp
- * @param {Number, String} hue hue value (range [0 - 65535])
+ * @param {Number, String} id id of the lamp
+ * @param {Number, String} h  hue value (range [0 - 65535])
  */
-function setHue(id, hue) {
-  hueUserApi.setLightState(id, state[id].hue(hue))
+function setHue(id, h) {
+  hueUserApi.setLightState(id, state[id].hue(h))
     .then(noop)
     .done();
 }
 
 /**
  * set the saturation value of a speciffic light
- * @param {Number, String} id         id of the lamp
- * @param {Number, String} saturation saturation value (range [0 - 100])
+ * @param {Number, String} id id of the lamp
+ * @param {Number, String} s  saturation value (range [0 - 100])
  */
-function setSaturation(id, saturation) {
-  hueUserApi.setLightState(id, state[id].saturation(saturation))
+function setSaturation(id, s) {
+  hueUserApi.setLightState(id, state[id].saturation(s))
     .then(noop)
     .done();
 }
 
 /**
  * set the brightness value of a speciffic light
- * @param {Number, String} id         id of the lamp
- * @param {Number, String} brightness brightness value (range [0 - 100])
+ * @param {Number, String} id id of the lamp
+ * @param {Number, String} b brightness value (range [0 - 100])
  */
-function setBrightness(id, brightness) {
-  hueUserApi.setLightState(id, state[id].brightness(brightness))
+function setBrightness(id, b) {
+  hueUserApi.setLightState(id, state[id].brightness(b))
+    .then(noop)
+    .done();
+}
+
+/**
+ * set the brightness value of a speciffic light
+ * @param {Number, String} id    id of the lamp
+ * @param {Number, String} light collection of values
+ */
+function setHSB(id, light) {
+  hueUserApi.setLightState(id, state[id].hue(light.hue).saturation(light.saturation).saturation(light.saturation))
     .then(noop)
     .done();
 }
@@ -194,36 +205,36 @@ function getHueConfig(ip, user) {
 // start connection
 var masterSocket = new Promise(function(resolve, reject) {
   io.on('connection', function(socket) {
+    socket.on('test', function(message) {
+      console.log(message)
+    });
+    socket.on('lights', function(id, value) {
+      if (!hueLights) {
+        return
+      }
+      console.log(value)
+      if (value === 'off') {
+        turnOff(id);
+      } else if (value === 'on') {
+        turnOn(id);
+      } else if (typeof value === 'object') {
 
+        if (value.type === 'hue') {
+          setHue(id, value.val);
+        } else if (value.type === 'brightness') {
+          setBrightness(id, value.val);
+        } else if (value.type === 'saturation') {
+          setSaturation(id, value.val);
+        } else if (value.type === 'all') {
+          setHSB(id, value.val);
+        }
+      }
+    });
     hue.nupnpSearch().then(getHueBridge).done();
     socket.emit('lights', hueLights);
     resolve(socket);
   });
 });
 
-masterSocket.then(function(socket) {
-  // handle io events
-  socket.on('lights', function(id, value) {
-
-    if (!hueLights) {
-      return
-    }
-
-    if (value === 'off') {
-      turnOff(id);
-    } else if (value === 'on') {
-      turnOn(id);
-    } else if (typeof value === 'object') {
-
-      if (value.type === 'hue') {
-        setHue(id, value.val);
-      } else if (value.type === 'brightness') {
-        setBrightness(id, value.val);
-      } else if (value.type === 'saturation') {
-        setSaturation(id, value.val);
-      }
-    }
-  });
-});
 
 

@@ -7,6 +7,10 @@ import React from 'react';
 import reactDOM from 'react-dom';
 import classNames from 'classnames';
 import color from 'color';
+
+// components
+import HueLight from './components/HueLight/HueLight.jsx'
+
 const socket = require('socket.io-client')('http://localhost:8080');
 
 // create some dummy props 
@@ -29,9 +33,12 @@ const dummyProps = {
       }
     }
   },
-  lights: {
-  }
+  lights: {}
 };
+
+
+
+
 
 /**
  * the LInAW component
@@ -43,14 +50,10 @@ class LInAW extends React.Component {
     super(props);
 
     // bind methods
-    this.lightsOn = this.lightsOn.bind(this);
-    this.lightsOff = this.lightsOff.bind(this);
-    this.setColorState = this.setColorState.bind(this);
-    this.setHue = this.setHue.bind(this);
-    this.setBrightness = this.setBrightness.bind(this);
-    this.setSaturation = this.setSaturation.bind(this);
+
     this.setAudioVolume = this.setAudioVolume.bind(this);
     this.handleAudio = this.handleAudio.bind(this);
+    this.handleLightChange = this.handleLightChange.bind(this);
 
     // allow and set initial state
     this.state = {
@@ -59,7 +62,6 @@ class LInAW extends React.Component {
     }
 
     // set helpers
-    this.hueRange = 65535;
     this.backgroundColor = '#010102';
     this.color = '#fefefe';
   }
@@ -67,11 +69,15 @@ class LInAW extends React.Component {
   componentWillMount() {
     socket.on('lights', (data) => {
       console.log(data)
+      if (!data) {
+        return
+      }
       let lights = this.state.lights;
       data.forEach((light, index) => {
         let state = light.state;
         lights[light.id] = lights[light.id] || {};
         lights[light.id].name = light.name;
+        lights[light.id].id = light.id;
         lights[light.id].on = state.on;
         lights[light.id].hue = state.hue;
         lights[light.id].saturation = state.sat;
@@ -84,84 +90,18 @@ class LInAW extends React.Component {
     });
   }
 
-  /**
-   * set the internal state of the slider values
-   * @param {String,Number} id   the light id
-   * @param {String}        prop the lightProperty to change[description]
-   * @param {Event}         e    the event that triggered the method
-   */
-  setColorState(id, prop, e) {
-    let lights = this.state.lights;
-    let value = e.target.value;
-    lights[id][prop] = value;
-    this.setState({
-      lights: lights
-    })
-  }
 
-  /**
-   * turn lights on
-   */
-  lightsOn(id) {
-    let lights = this.state.lights;
-    lights[id].on = true;
-    this.setState({
-      lights: lights
-    })
-    socket.emit('lights', id, 'on');
+  handleLightChange(light, toggle) {
+    console.log(light)
+    if (toggle) {
+      socket.emit('lights', light.id, toggle);
+    } else {
+      socket.emit('lights', light.id, {
+        type: 'all',
+        val: light
+      });
+    }
   }
-
-  /**
-   * turn lights off
-   */
-  lightsOff(id) {
-    let lights = this.state.lights;
-    lights[id].on = false;
-    this.setState({
-      lights: lights
-    });
-    socket.emit('lights', id, 'off');
-  }
-
-  /**
-   * send hue val to hardware
-   * @param {String,Number} id the light id
-   * @param {Event}         e  the event that triggered the method
-   */
-  setHue(id, e) {
-    let value = e.target.value;
-    socket.emit('lights', id, {
-      type: 'hue',
-      val: value
-    });
-  }
-
-  /**
-   * send bri val to hardware
-   * @param {String,Number} id the light id
-   * @param {Event}         e  the event that triggered the method
-   */
-  setBrightness(id, e) {
-    let value = e.target.value;
-    socket.emit('lights', id, {
-      type: 'brightness',
-      val: value
-    });
-  }
-
-  /**
-   * send sat val to hardware
-   * @param {String,Number} id the light id
-   * @param {Event}         e  the event that triggered the method
-   */
-  setSaturation(id, e) {
-    let value = e.target.value;
-    socket.emit('lights', id, {
-      type: 'saturation',
-      val: value
-    });
-  }
-
   /**
    * set audio volume
    */
@@ -172,7 +112,7 @@ class LInAW extends React.Component {
    * set audio volume
    */
   handleAudio(player, type, e) {
-    console.log(player,type)
+    console.log(player, type)
     socket.emit(type, player);
   }
 
@@ -206,8 +146,12 @@ class LInAW extends React.Component {
         return (
           <div key={ data.module.id }>
             <h2>Audio (Sonos)</h2>
-            <button onClick={this.handleAudio.bind(this,0,'play')}>play</button>
-            <button onClick={this.handleAudio.bind(this,0,'pause')}>pause</button>
+            <button onClick={ this.handleAudio.bind(this, 0, 'play') }>
+              play
+            </button>
+            <button onClick={ this.handleAudio.bind(this, 0, 'pause') }>
+              pause
+            </button>
             <h3>Play:3</h3>
             <input type='range'
                    min={ 0 }
@@ -228,46 +172,11 @@ class LInAW extends React.Component {
       case 'hue':
         let lights = [];
         for (let light in this.state.lights) {
-          let oneLight = this.state.lights[light];
-          let color = `
-          ${oneLight.hue / this.hueRange * 360},
-          ${oneLight.saturation / 255 * 100}%,
-          ${oneLight.brightness / 255 * 50 + 25}%`;
-
           lights.push(
-            <div key={ light }
-                 style={ {  padding: '10px'} }>
-              <h3>{ oneLight.name } <span style={ {  display: 'inline-block',  margin: '.5em',  height: '2em',  width: '2em',  borderRadius: '100%',  border: '1px solid currentColor',  backgroundColor: `hsl(${color})`,  color: this.color} }/></h3>
-              <button onClick={ this.lightsOn.bind(this, light) }
-                      style={ {  backgroundColor: oneLight.on ? this.color : this.backgroundColor,  color: oneLight.on ? this.backgroundColor : this.color} }>
-                on
-              </button>
-              <button onClick={ this.lightsOff.bind(this, light) }
-                      style={ {  backgroundColor: oneLight.on ? this.backgroundColor : this.color,  color: oneLight.on ? this.color : this.backgroundColor,} }>
-                off
-              </button>
-              <h3>h</h3>
-              <input type='range'
-                     min={ 0 }
-                     max={ this.hueRange }
-                     value={ oneLight.hue }
-                     onChange={ this.setColorState.bind(this, light, 'hue') }
-                     onMouseUp={ this.setHue.bind(this, light) } />
-              <h3>s</h3>
-              <input type='range'
-                     min={ 0 }
-                     max={ 255 }
-                     value={ oneLight.saturation }
-                     onChange={ this.setColorState.bind(this, light, 'saturation') }
-                     onMouseUp={ this.setSaturation.bind(this, light) } />
-              <h3>b</h3>
-              <input type='range'
-                     min={ 0 }
-                     max={ 255 }
-                     value={ oneLight.brightness }
-                     onChange={ this.setColorState.bind(this, light, 'brightness') }
-                     onMouseUp={ this.setBrightness.bind(this, light) } />
-            </div>
+            <HueLight key={ this.state.lights[light].name }
+                      light={ this.state.lights[light] }
+                      onChange={ this.handleLightChange }
+                      toggle={ this.handleLightChange } />
           );
         }
         return (
@@ -312,9 +221,13 @@ class LInAW extends React.Component {
     let modules = this.getModules();
     return (
       <div className={ 'LInaW-client' }
-           style={ {  position: 'absolute',  top: 0,  right: 0,  bottom: 0,  left: 0,  backgroundColor: this.backgroundColor,  color: this.color,} }>
-        <h1>LInAW</h1>
-        { modules }
+           style={ {  display: 'flex',  flexDirection: 'column',  position: 'absolute',  top: 0,  right: 0,  bottom: 0,  left: 0,  backgroundColor: this.backgroundColor,  color: this.color,} }>
+        <div style={ {  flex: '0 0 auto',  padding: 10} }>
+          LInAW
+        </div>
+        <div style={ {  flex: '1 1 1px',  overflow: 'auto'} }>
+          { modules }
+        </div>
       </div>
       );
   }

@@ -7,10 +7,11 @@ html
         font-family: sans-serif;
         height: 100vh;
         margin: 0;
+        overflow: hidden;
       }
       h1,h2,h3,h4 {
         font-weight: lighter;
-        margin: 0.5em 0;
+        margin: 1.5em 0 .5em;
         line-height: 1;
         display: flex;
         align-items: center;
@@ -32,10 +33,11 @@ html
         color: currentColor;
         -webkit-appearance: none;
         background: none;
-        height: 4px;
+        height: 8px;
         width: 300px;
         border: 1px solid;
-        border-radius: 4px;
+        border-radius: 8px;
+        margin: 8px 0;
         cursor: pointer;
         -webkit-user-select: none;
       }
@@ -43,9 +45,9 @@ html
         -webkit-appearance: none;
         background: currentColor;
         border: 1px solid;
-        height: 16px;
-        width: 16px;
-        border-radius: 16px;
+        height: 36px;
+        width: 8px;
+        border-radius: 8px;
         cursor: -webkit-grab;
       }
       input[type="range"]::-webkit-slider-thumb:active {
