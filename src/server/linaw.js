@@ -1,5 +1,5 @@
 // load modules
-var serverConfig = require('./server.js');
+var serverConfig = require('./server');
 
 // set defaults
 var app = serverConfig.app;
@@ -8,8 +8,7 @@ var server = serverConfig.server;
 var io = serverConfig.io;
 
 // use routing
-require('./routes.js');
+require('./routes');
 
-// use apps
-require('../modules/PhillipsHue/PhillipsHue.js');
-require('../modules/Sonos/Sonos.js');
+// use modules
+require('./modules')

@@ -35,8 +35,7 @@ class LInAW extends React.Component {
 
   /**
    * get the module
-   * currently hardcoded prototypes to test the interaction
-   * ths method should return components that offer communication
+   * this method returns components that offer communication
    * @param  {Object} data   module config
    * @param  {String} module module key
    * @return {Component}     returns a corresponding component to a module
@@ -76,12 +75,6 @@ class LInAW extends React.Component {
       );
   }
 }
-
-
-
-
-
-
 
 // render the app
 reactDOM.render(<LInAW/>, document.getElementById('LInAW'));
