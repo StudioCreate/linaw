@@ -127,12 +127,38 @@ class HueLight extends React.Component {
 
   render() {
     let onOff;
+    let colorControl;
 
     if (this.state.light.on) {
       onOff = (
         <button onClick={ this.lightsOff }>
           off
         </button>
+      );
+      colorControl = (
+        <div>
+          <h3>h</h3>
+          <input type='range'
+                 min={ 0 }
+                 max={ this.hueRange }
+                 value={ this.state.light.hue }
+                 onChange={ this.setColorState.bind(this, 'hue', false) }
+                 onMouseUp={ this.setColorState.bind(this, 'hue', true) } />
+          <h3>s</h3>
+          <input type='range'
+                 min={ 0 }
+                 max={ 255 }
+                 value={ this.state.light.saturation }
+                 onChange={ this.setColorState.bind(this, 'saturation', false) }
+                 onMouseUp={ this.setColorState.bind(this, 'saturation', true) } />
+          <h3>l</h3>
+          <input type='range'
+                 min={ 0 }
+                 max={ 255 }
+                 value={ this.state.light.brightness }
+                 onChange={ this.setColorState.bind(this, 'brightness', false) }
+                 onMouseUp={ this.setColorState.bind(this, 'brightness', true) } />
+        </div>
       );
     } else {
       onOff = (
@@ -146,27 +172,7 @@ class HueLight extends React.Component {
       <div style={ style.HueLight }>
         <h3>{ this.state.light.name } { this.colorDisplay(this.state.light) }</h3>
         { onOff }
-        <h3>h</h3>
-        <input type='range'
-               min={ 0 }
-               max={ this.hueRange }
-               value={ this.state.light.hue }
-               onChange={ this.setColorState.bind(this, 'hue', false) }
-               onMouseUp={ this.setColorState.bind(this, 'hue', true) } />
-        <h3>s</h3>
-        <input type='range'
-               min={ 0 }
-               max={ 255 }
-               value={ this.state.light.saturation }
-               onChange={ this.setColorState.bind(this, 'saturation', false) }
-               onMouseUp={ this.setColorState.bind(this, 'saturation', true) } />
-        <h3>l</h3>
-        <input type='range'
-               min={ 0 }
-               max={ 255 }
-               value={ this.state.light.brightness }
-               onChange={ this.setColorState.bind(this, 'brightness', false) }
-               onMouseUp={ this.setColorState.bind(this, 'brightness', true) } />
+        { colorControl }
       </div>
       );
   }

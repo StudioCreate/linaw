@@ -94,6 +94,16 @@ function displayError(err) {
  */
 function noop() {}
 
+
+/**
+ * update lights to sync client with service
+ */
+function updateLights() {
+  hueUserApi.lights()
+    .then(displayLights)
+    .done();
+}
+
 /**
  * set the hue value of a speciffic light
  * @param {Number, String} id id of the lamp
@@ -101,7 +111,7 @@ function noop() {}
  */
 function setHue(id, h) {
   hueUserApi.setLightState(id, state[id].hue(h))
-    .then(noop)
+    .then(updateLights)
     .done();
 }
 
@@ -112,7 +122,7 @@ function setHue(id, h) {
  */
 function setSaturation(id, s) {
   hueUserApi.setLightState(id, state[id].saturation(s))
-    .then(noop)
+    .then(updateLights)
     .done();
 }
 
@@ -123,7 +133,7 @@ function setSaturation(id, s) {
  */
 function setBrightness(id, b) {
   hueUserApi.setLightState(id, state[id].brightness(b))
-    .then(noop)
+    .then(updateLights)
     .done();
 }
 
@@ -134,7 +144,7 @@ function setBrightness(id, b) {
  */
 function setHSB(id, light) {
   hueUserApi.setLightState(id, state[id].hue(light.hue).saturation(light.saturation).brightness(light.brightness))
-    .then(noop)
+    .then(updateLights)
     .done();
 }
 
@@ -144,7 +154,7 @@ function setHSB(id, light) {
  */
 function turnOn(id) {
   hueUserApi.setLightState(id, state[id].on())
-    .then(noop)
+    .then(updateLights)
     .done();
 }
 
@@ -154,7 +164,7 @@ function turnOn(id) {
  */
 function turnOff(id) {
   hueUserApi.setLightState(id, state[id].off())
-    .then(noop)
+    .then(updateLights)
     .done();
 }
 
