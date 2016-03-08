@@ -32,7 +32,7 @@ class HueBridge extends React.Component {
    * component a standalone module
    */
   componentWillMount() {
-    this.props.socket.on('lights', (data) => {
+    this.props.socket.on('HueBridge', (data) => {
       if (!data) {
         return
       }

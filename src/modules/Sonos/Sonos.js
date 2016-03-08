@@ -5,10 +5,7 @@
  * each player volume can be changed through a socket event
  * the options are currently unknown since the source module is not documented
  * the module is currently being rewritten and a dev version is loaded here
- */
-
-/**
- * Simple Sonos module
+ *
  * This module is using an experimental version of sonos-discovery
  * current progress of the new version can be tracked here:
  *   https://github.com/jishi/node-sonos-discovery/tree/refactor-with-promises
@@ -42,17 +39,11 @@ discovery.on('topology-change', function() {
 
 // connect via sockets
 io.on('connection', function(socket) {
-  socket.on('volume', function(player, value) {
+  socket.on('SonosVolume', function(player, value) {
     discovery.players[player].setVolume(value)
   });
-  socket.on('play', function(player) {
-    console.log('>>>>>>>>>     play    <<<<<<<<<')
+  socket.on('SonosAction', function(player, action) {
     var player = discovery.getPlayer('PLAY:5')/*for now play:5 is always the master discovery.players[player].roomName*/
-    player.play();
-  });
-  socket.on('pause', function(player) {
-    console.log('>>>>>>>>>     pause   <<<<<<<<<')
-    var player = discovery.getPlayer('PLAY:5')/*for now play:5 is always the master discovery.players[player].roomName*/
-    player.pause()
+    player[action]();
   });
 });

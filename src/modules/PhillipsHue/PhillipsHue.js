@@ -69,7 +69,7 @@ function displayLights(result) {
 
   // send Socket events after connection
   masterSocket.then(function(socket) {
-    socket.emit('lights', hueLights);
+    socket.emit('HueBridge', hueLights);
   });
 }
 

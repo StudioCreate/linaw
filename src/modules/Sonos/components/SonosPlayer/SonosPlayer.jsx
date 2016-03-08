@@ -15,7 +15,6 @@ class SonosPlayer extends React.Component {
     super(props);
 
     // bind methods
-
     this.setAudioVolume = this.setAudioVolume.bind(this);
     this.handleAction = this.handleAction.bind(this);
 
@@ -29,23 +28,21 @@ class SonosPlayer extends React.Component {
    * @param {Event}  e       event that triggered this method
    */
   setAudioVolume(player, e) {
-    this.props.socket.emit('volume', player, e.target.value);
+    this.props.socket.emit('SonosVolume', player, e.target.value);
   }
 
   /**
    * handle actions as 'play', 'pause' etc.
    * @param {Object} player  the Sonos player
-   * @param {String} type    type of action
+   * @param {String} action  type of action
    * @param {Event}  e       event that triggered this method
    */
-  handleAction(player, type, e) {
-    this.props.socket.emit(type, player);
+  handleAction(player, action, e) {
+    this.props.socket.emit('SonosAction', player, action);
   }
 
   render() {
     return (
-
-
       <div>
         <h2>Audio (Sonos)</h2>
         <button onClick={ this.handleAction.bind(this, 0, 'play') }>
