@@ -9,7 +9,7 @@ import classNames from 'classnames';
 import color from 'color';
 
 // components
-import HueLight from './components/HueLight/HueLight.jsx'
+import HueBridge from './components/HueBridge/HueBridge.jsx'
 
 const socket = require('socket.io-client')('http://localhost:8080');
 
@@ -33,7 +33,6 @@ const dummyProps = {
       }
     }
   },
-  lights: {}
 };
 
 
@@ -53,12 +52,10 @@ class LInAW extends React.Component {
 
     this.setAudioVolume = this.setAudioVolume.bind(this);
     this.handleAudio = this.handleAudio.bind(this);
-    this.handleLightChange = this.handleLightChange.bind(this);
 
     // allow and set initial state
     this.state = {
       modules: dummyProps.modules,
-      lights: dummyProps.lights
     }
 
     // set helpers
@@ -66,42 +63,7 @@ class LInAW extends React.Component {
     this.color = '#fefefe';
   }
 
-  componentWillMount() {
-    socket.on('lights', (data) => {
-      console.log(data)
-      if (!data) {
-        return
-      }
-      let lights = this.state.lights;
-      data.forEach((light, index) => {
-        let state = light.state;
-        lights[light.id] = lights[light.id] || {};
-        lights[light.id].name = light.name;
-        lights[light.id].id = light.id;
-        lights[light.id].on = state.on;
-        lights[light.id].hue = state.hue;
-        lights[light.id].saturation = state.sat;
-        lights[light.id].brightness = state.bri;
 
-      });
-      this.setState({
-        lights: lights
-      });
-    });
-  }
-
-
-  handleLightChange(light, toggle) {
-    console.log(light)
-    if (toggle) {
-      socket.emit('lights', light.id, toggle);
-    } else {
-      socket.emit('lights', light.id, {
-        type: 'all',
-        val: light
-      });
-    }
-  }
   /**
    * set audio volume
    */
@@ -170,22 +132,9 @@ class LInAW extends React.Component {
 
       // LIGHT
       case 'hue':
-        let lights = [];
-        for (let light in this.state.lights) {
-          lights.push(
-            <HueLight key={ this.state.lights[light].name }
-                      light={ this.state.lights[light] }
-                      onChange={ this.handleLightChange }
-                      toggle={ this.handleLightChange } />
-          );
-        }
         return (
-          <div key={ data.module.id }>
-            <h2>Lights (Phillips hue)</h2>
-            <div style={ {  display: 'flex'} }>
-              { lights }
-            </div>
-          </div>
+          <HueBridge key={ data.module.id }
+                     socket={ socket } />
           );
         break;
 

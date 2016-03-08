@@ -7,7 +7,7 @@ var style = {
   HueLight: {
     padding: '10px'
   },
-  swatch: (color)=>({
+  swatch: (color) => ({
     display: 'inline-block',
     margin: '.5em',
     height: '2em',
@@ -15,10 +15,6 @@ var style = {
     borderRadius: '2em',
     border: '1px solid currentColor',
     backgroundColor: `hsl(${color})`,
-  }),
-  button: (on, c, b) => ({
-    backgroundColor: on ? c : b,
-    color: on ? b : c
   })
 }
 
@@ -26,21 +22,26 @@ var style = {
 class HueLight extends React.Component {
   constructor(props) {
     super(props);
+
+    // bind methods
     this.lightsOn = this.lightsOn.bind(this);
     this.lightsOff = this.lightsOff.bind(this);
     this.setColorState = this.setColorState.bind(this);
-    this.sendColorState = this.sendColorState.bind(this);
+    this.colorDisplay = this.colorDisplay.bind(this);
+
+    // allow and set initial state
     this.state = {
       light: props.light
     }
 
     // set helpers
-    this.backgroundColor = '#010102';
-    this.color = '#fefefe';
     this.hueRange = 65535;
-
   }
 
+  /**
+   * make sure the state is updtated if new data is received
+   * @param  {Object} newProps the new props before active
+   */
   componentWillReceiveProps(newProps) {
     this.setState({
       light: newProps.light
@@ -49,28 +50,23 @@ class HueLight extends React.Component {
 
   /**
    * set the internal state of the slider values
-   * @param {String}        prop the lightProperty to change[description]
-   * @param {Event}         e    the event that triggered the method
+   * @param {String}  prop the lightProperty to change
+   * @param {Boolean} send if true send external via sockets
+   *                       this flag will help prevent overload on the bridge
+   * @param {Event}   e    the event that triggered the method
    */
-  setColorState(prop, e) {
+  setColorState(prop, send, e) {
     let light = this.state.light;
     let value = e.target.value;
     light[prop] = value;
+
+    // internal
     this.setState({
       light: light
     })
-  }
 
-  /**
-  * send the internal state to the parent component
-  * @param {String}  prop the lightProperty to change[description]
-  * @param {Event}   e    the event that triggered the method
-  */
-  sendColorState(prop, e) {
-    let light = this.state.light;
-    let value = e.target.value;
-    light[prop] = value;
-    if (typeof this.props.onChange === 'function') {
+    // external
+    if (send && typeof this.props.onChange === 'function') {
       this.props.onChange(light);
     }
   }
@@ -81,9 +77,13 @@ class HueLight extends React.Component {
   lightsOn() {
     let light = this.state.light;
     light.on = true;
+
+    // internal
     this.setState({
       light: light
     });
+
+    // external
     if (typeof this.props.toggle === 'function') {
       this.props.toggle(light, 'on');
     }
@@ -93,54 +93,80 @@ class HueLight extends React.Component {
    * switch lights off
    */
   lightsOff() {
+
     let light = this.state.light;
     light.on = false;
+
+    // internal
     this.setState({
       light: light
     });
+
+    // external
     if (typeof this.props.toggle === 'function') {
       this.props.toggle(light, 'off');
     }
   }
 
+  /**
+   * display the current state color in a simple display
+   * @param  {Object} light  the light in pretty format
+   * @return {Element}       returns the display
+   */
+  colorDisplay(light) {
+    // convert color values
+    let h = light.hue / this.hueRange * 360;
+    let s = light.saturation / 255 * 100;
+    // fake the lightness since the Hue bulbs 
+    // always have color if saturated
+    let l = light.brightness / 255 * 50 + 25;
+    let color = `${h},${s}%,${l}%`;
+
+    return <span style={ style.swatch(color) } />
+  }
+
   render() {
-    let color = `
-          ${this.state.light.hue / this.hueRange * 360},
-          ${this.state.light.saturation / 255 * 100}%,
-          ${this.state.light.brightness / 255 * 50 + 25}%`;
+    let onOff;
+
+    if (this.state.light.on) {
+      onOff = (
+        <button onClick={ this.lightsOff }>
+          off
+        </button>
+      );
+    } else {
+      onOff = (
+        <button onClick={ this.lightsOn }>
+          on
+        </button>
+      );
+    }
 
     return (
       <div style={ style.HueLight }>
-        <h3>{ this.state.light.name } <span style={ style.swatch(color) }/></h3>
-        <button onClick={ this.lightsOn }
-                style={ style.button(this.state.light.on, this.color, this.backgroundColor) }>
-          on
-        </button>
-        <button onClick={ this.lightsOff }
-                style={ style.button(!this.state.light.on, this.color, this.backgroundColor) }>
-          off
-        </button>
+        <h3>{ this.state.light.name } { this.colorDisplay(this.state.light) }</h3>
+        { onOff }
         <h3>h</h3>
         <input type='range'
                min={ 0 }
                max={ this.hueRange }
                value={ this.state.light.hue }
-               onChange={ this.setColorState.bind(this, 'hue') }
-               onMouseUp={ this.sendColorState.bind(this, 'hue') } />
+               onChange={ this.setColorState.bind(this, 'hue', false) }
+               onMouseUp={ this.setColorState.bind(this, 'hue', true) } />
         <h3>s</h3>
         <input type='range'
                min={ 0 }
                max={ 255 }
                value={ this.state.light.saturation }
-               onChange={ this.setColorState.bind(this, 'saturation') }
-               onMouseUp={ this.sendColorState.bind(this, 'saturation') } />
+               onChange={ this.setColorState.bind(this, 'saturation', false) }
+               onMouseUp={ this.setColorState.bind(this, 'saturation', true) } />
         <h3>l</h3>
         <input type='range'
                min={ 0 }
                max={ 255 }
                value={ this.state.light.brightness }
-               onChange={ this.setColorState.bind(this, 'brightness') }
-               onMouseUp={ this.sendColorState.bind(this, 'brightness') } />
+               onChange={ this.setColorState.bind(this, 'brightness', false) }
+               onMouseUp={ this.setColorState.bind(this, 'brightness', true) } />
       </div>
       );
   }

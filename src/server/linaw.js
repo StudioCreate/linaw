@@ -11,5 +11,5 @@ var io = serverConfig.io;
 require('./routes.js');
 
 // use apps
-require('./hue.js');
+require('./HueBridge.js');
 require('./sonos.js');

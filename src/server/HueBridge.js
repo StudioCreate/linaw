@@ -64,9 +64,10 @@ function displayLights(result) {
 
   // create a state for each light
   hueLights.forEach(function(light, index) {
-    //console.log(light.state)
     state[light.id] = lightState.create()
   });
+
+  // send Socket events after connection
   masterSocket.then(function(socket) {
     socket.emit('lights', hueLights);
   });
@@ -133,10 +134,10 @@ function setBrightness(id, b) {
 /**
  * set the brightness value of a speciffic light
  * @param {Number, String} id    id of the lamp
- * @param {Number, String} light collection of values
+ * @param {Object}         light collection of values
  */
 function setHSB(id, light) {
-  hueUserApi.setLightState(id, state[id].hue(light.hue).saturation(light.saturation).saturation(light.saturation))
+  hueUserApi.setLightState(id, state[id].hue(light.hue).saturation(light.saturation).brightness(light.brightness))
     .then(noop)
     .done();
 }
@@ -202,23 +203,27 @@ function getHueConfig(ip, user) {
   hueUserApi.config().then(displayConfig).done();
 }
 
-// start connection
+/**
+ * start promise based connection
+ * @promise masterSocket
+ */
 var masterSocket = new Promise(function(resolve, reject) {
   io.on('connection', function(socket) {
+    // test socket event
     socket.on('test', function(message) {
       console.log(message)
     });
-    socket.on('lights', function(id, value) {
+
+    // light event
+    socket.on('HueBridge', function(id, value) {
       if (!hueLights) {
         return
       }
-      console.log(value)
       if (value === 'off') {
         turnOff(id);
       } else if (value === 'on') {
         turnOn(id);
       } else if (typeof value === 'object') {
-
         if (value.type === 'hue') {
           setHue(id, value.val);
         } else if (value.type === 'brightness') {
@@ -230,6 +235,8 @@ var masterSocket = new Promise(function(resolve, reject) {
         }
       }
     });
+
+    // connect to bridge and send Socket events
     hue.nupnpSearch().then(getHueBridge).done();
     socket.emit('lights', hueLights);
     resolve(socket);
