@@ -30,6 +30,7 @@ class LInAW extends React.Component {
     // allow and set initial state
     this.state = {
       modules: DUMMYPROPS.modules,
+      // module: 'light'
     }
   }
 

@@ -32,6 +32,7 @@ class HueBridge extends React.Component {
    * component a standalone module
    */
   componentWillMount() {
+    this.props.socket.emit('MountHueBridge');
     this.props.socket.on('HueBridge', (data) => {
       if (!data) {
         return
@@ -53,6 +54,11 @@ class HueBridge extends React.Component {
         lights: lights
       });
     });
+  }
+
+  // unregister socket events before unmounting
+  componentWillUnmount(){
+    this.props.socket.off('HueBridge');
   }
 
   /**

@@ -214,6 +214,10 @@ var masterSocket = new Promise(function(resolve, reject) {
       console.log(message)
     });
 
+    socket.on('MountHueBridge', function(message) {
+      socket.emit('HueBridge', hueLights);
+    });
+
     // light event
     socket.on('HueBridge', function(id, value) {
       if (!hueLights) {
