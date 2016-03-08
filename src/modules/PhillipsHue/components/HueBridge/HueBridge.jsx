@@ -1,8 +1,3 @@
-/**
- * LInAW
- * React.js powered client for the LInAW app
- */
-
 import React from 'react';
 import classNames from 'classnames';
 import Radium from 'radium';

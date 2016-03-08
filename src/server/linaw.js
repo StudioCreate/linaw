@@ -12,4 +12,4 @@ require('./routes.js');
 
 // use apps
 require('../modules/PhillipsHue/PhillipsHue.js');
-require('./sonos.js');
+require('../modules/Sonos/Sonos.js');
