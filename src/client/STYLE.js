@@ -15,7 +15,16 @@ const STYLE = {
   body: {
     flex: '1 1 1px',
     overflow: 'auto'
-  }
+  },
+  nav: {
+    display: 'flex',
+  },
+  navLink: (selected)=>({
+    padding: '.5em 1em',
+    cursor: 'pointer',
+    borderBottom: '2px solid transparent',
+    borderColor: selected ? 'currentColor' : 'transparent'
+  })
 };
 
 export default STYLE

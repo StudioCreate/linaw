@@ -40,21 +40,56 @@ class LInAW extends React.Component {
    * @param  {String} module module key
    * @return {Component}     returns a corresponding component to a module
    */
-  getModule(data, module) {
+  getModule(module) {
+    if (!this.state.modules[module]) {
+      return
+    }
     // get the module from the registered modules list
-    return MODULES[data.module.id](module,socket);
+    return MODULES[this.state.modules[module].module.id](module,socket);
   }
 
   /**
    * returns all modules that are loaded in the current state of the app
    * @return {Array} a list of modules to display
    */
-  getModules(modules) {
+  getModules() {
     let configuredModules = [];
-    for (let module in modules) {
-      configuredModules.push(this.getModule(modules[module], module));
+    for (let module in this.state.modules) {
+      configuredModules.push(this.getModule(module));
     }
     return configuredModules
+  }
+
+  /**
+   * set the module
+   * displays the module selected from the navigation
+   * @param  {Object} module   module key
+   */
+  setModule(module) {
+    // get the module from the registered modules list
+    this.setState({
+      module: module
+    })
+  }
+
+  /**
+   * returns all modules as navigation links
+   * @return {Element} returns a DOM element with links
+   */
+  getNavigation(modules) {
+    let links = [];
+    for (let module in modules) {
+      links.push(
+        <div key={ module }
+            style={STYLE.navLink(this.state.module === module)}
+            onClick={this.setModule.bind(this,module)}>
+          {module}
+        </div>
+      );
+    }
+    return (
+      <div style={STYLE.nav}>{links}</div>
+      );
   }
 
   /**
@@ -67,9 +102,10 @@ class LInAW extends React.Component {
            style={ STYLE.LInAW }>
         <div style={ STYLE.header }>
           LInAW
+          {this.getNavigation(this.state.modules)}
         </div>
         <div style={ STYLE.body }>
-          { this.getModules(this.state.modules) }
+          { this.getModule(this.state.module) }
         </div>
       </div>
       );
