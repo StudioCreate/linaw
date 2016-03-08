@@ -11,5 +11,5 @@ var io = serverConfig.io;
 require('./routes.js');
 
 // use apps
-require('./HueBridge.js');
+require('../modules/PhillipsHue/PhillipsHue.js');
 require('./sonos.js');

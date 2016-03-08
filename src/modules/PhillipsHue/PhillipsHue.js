@@ -9,7 +9,7 @@
 
 // load modules
 var hue = require('node-hue-api');
-var serverConfig = require('./server.js');
+var serverConfig = require('../../server/server.js');
 
 // set defaults
 var app = serverConfig.app;

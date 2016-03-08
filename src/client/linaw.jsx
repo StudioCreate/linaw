@@ -9,7 +9,7 @@ import classNames from 'classnames';
 import color from 'color';
 
 // components
-import HueBridge from './components/HueBridge/HueBridge.jsx'
+import HueBridge from '../modules/PhillipsHue/components/HueBridge/HueBridge.jsx'
 
 const socket = require('socket.io-client')('http://localhost:8080');
 
