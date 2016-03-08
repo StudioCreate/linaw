@@ -92,11 +92,7 @@ function displayError(err) {
 /**
  * no operation
  */
-function noop() {
-  hueUserApi.lights()
-    .then(displayLights)
-    .done();
-}
+function noop() {}
 
 /**
  * set the hue value of a speciffic light
