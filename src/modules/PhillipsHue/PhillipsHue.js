@@ -2,7 +2,6 @@
  * Simple phillips hue prototype
  * This is a simple module to control the 
  * lights connected to a hue bridge
- * it allows getting the bridge username by setting the ID to undefined
  * To get a new user press the link button on the bridge and run this 
  * script within 30 seconds
  */
@@ -10,6 +9,7 @@
 // load modules
 var hue = require('node-hue-api');
 var serverConfig = require('../../server/server.js');
+var fs = require('fs');
 
 // set defaults
 var app = serverConfig.app;
@@ -25,10 +25,8 @@ var hueBridgeIP;
 var hueBridgeID;
 var hueLights;
 
-// if the user is set do undefined a new user will be created and logged.
-// until a caching mechanism is implemented the new user id needs to be copied here
-var hueUserID = '3f65cc39239005b736da6e7d1bad0ebb';
-
+var clientKey = "./clientKey.txt";
+var hueUserID;
 // the user will be created as a new LInAW client
 var hueUser = 'LInAW';
 
@@ -39,12 +37,37 @@ var state = {};
 var hueUserApi;
 
 /**
+ * connect LInAW with the bridge
+ */
+function getHandshake() {
+  return new Promise(function(resolve, reject) {
+    if (fs.existsSync(clientKey)) {
+      hueUserID = fs.readFileSync(clientKey);
+      console.log('found LInAW user on HueBridge: ' + hueUserID);
+      resolve(hueUserID);
+    } else {
+      console.log('First usage, please click the link button on your HueBridge.');
+      reject();
+    }
+  });
+}
+
+/**
+ * store the client key on the server
+ * @param  {[type]} key username that LInAW used to register
+ */
+function storeClientKey(key) {
+  console.log('Storing LInAW user: ' + key);
+  fs.writeFileSync(clientKey, key);
+}
+
+/**
  * a helper to get the userID
  * @param {string} result the id
  */
 function displayUserResult(result) {
   hueUserID = result;
-
+  storeClientKey(hueUserID);
   // get the config (currently logging)
   getHueConfig(hueBidgeIP, hueUserID);
 
@@ -92,7 +115,8 @@ function displayError(err) {
 /**
  * no operation
  */
-function noop() {}
+function noop() {
+}
 
 
 /**
@@ -220,36 +244,46 @@ var masterSocket = new Promise(function(resolve, reject) {
       console.log(message)
     });
 
-    socket.on('MountHueBridge', function(message) {
-      socket.emit('HueBridge', hueLights);
-    });
 
-    // light event
-    socket.on('HueBridge', function(id, value) {
-      if (!hueLights) {
-        return
-      }
-      if (value === 'off') {
-        turnOff(id);
-      } else if (value === 'on') {
-        turnOn(id);
-      } else if (typeof value === 'object') {
-        if (value.type === 'hue') {
-          setHue(id, value.val);
-        } else if (value.type === 'brightness') {
-          setBrightness(id, value.val);
-        } else if (value.type === 'saturation') {
-          setSaturation(id, value.val);
-        } else if (value.type === 'all') {
-          setHSB(id, value.val);
-        }
-      }
-    });
+    // get handshake before attempting to connect
+    getHandshake()
+      .then(function() {
+        // connect to bridge and handle Socket events
+        hue.nupnpSearch().then(getHueBridge).done();
 
-    // connect to bridge and send Socket events
-    hue.nupnpSearch().then(getHueBridge).done();
-    socket.emit('lights', hueLights);
-    resolve(socket);
+        socket.emit('lights', hueLights);
+
+        // sync lights every time the component is mounted
+        socket.on('MountHueBridge', function() {
+          socket.emit('HueBridge', hueLights);
+        });
+
+        socket.on('HueBridge', function(id, value) {
+          if (!hueLights) { // better safe than sorry
+            return
+          }
+          if (value === 'off') {
+            turnOff(id);
+          } else if (value === 'on') {
+            turnOn(id);
+          } else if (typeof value === 'object') {
+            if (value.type === 'hue') {
+              setHue(id, value.val);
+            } else if (value.type === 'brightness') {
+              setBrightness(id, value.val);
+            } else if (value.type === 'saturation') {
+              setSaturation(id, value.val);
+            } else if (value.type === 'all') {
+              setHSB(id, value.val);
+            }
+          }
+        });
+        resolve(socket);
+      })
+      .catch(function() {
+        hue.nupnpSearch().then(getHueBridge).done();
+        reject(socket);
+      });
   });
 });
 

@@ -4,3 +4,4 @@ log
 public
 cache
 .DS_Store
+**/clientKey.txt
