@@ -24,8 +24,8 @@ var lightState = hue.lightState;
 var hueBridgeIP;
 var hueBridgeID;
 var hueLights;
-
-var clientKey = "./clientKey.txt";
+var keyDir = './cache/PhillipsHue'
+var clientKey = `${keyDir}/clientKey.txt`;
 var hueUserID;
 // the user will be created as a new LInAW client
 var hueUser = 'LInAW';
@@ -46,7 +46,6 @@ function getHandshake() {
       console.log('found LInAW user on HueBridge: ' + hueUserID);
       resolve(hueUserID);
     } else {
-      console.log('First usage, please click the link button on your HueBridge.');
       reject();
     }
   });
@@ -58,7 +57,11 @@ function getHandshake() {
  */
 function storeClientKey(key) {
   console.log('Storing LInAW user: ' + key);
+  if (!fs.existsSync(keyDir)){
+    fs.mkdirSync(keyDir);
+  }
   fs.writeFileSync(clientKey, key);
+
 }
 
 /**
@@ -91,7 +94,10 @@ function displayLights(result) {
   });
 
   // send Socket events after connection
+
   masterSocket.then(function(socket) {
+    socket.emit('HueBridge', hueLights);
+  }).catch(function(socket) {
     socket.emit('HueBridge', hueLights);
   });
 }
@@ -281,7 +287,22 @@ var masterSocket = new Promise(function(resolve, reject) {
         resolve(socket);
       })
       .catch(function() {
-        hue.nupnpSearch().then(getHueBridge).done();
+        console.log('First usage, please click the link button on your HueBridge.');
+        // prompt the user to click the link button
+        // and listen for the connect event
+        socket.on('MountHueBridge', function() {
+          socket.emit('ConnectHueBridge', hueLights);
+          if (hueLights) {
+            hue.nupnpSearch().then(getHueBridge).done();
+          }
+          socket.on('ConnectHueBridge', function() {
+            hue.nupnpSearch().then(getHueBridge).done();
+            getHandshake().then(function() {
+              hue.nupnpSearch().then(getHueBridge).done();
+            });
+          });
+        });
+
         reject(socket);
       });
   });

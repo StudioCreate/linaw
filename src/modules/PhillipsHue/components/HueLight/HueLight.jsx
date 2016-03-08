@@ -7,15 +7,19 @@ var style = {
   HueLight: {
     padding: '10px'
   },
-  swatch: (color) => ({
+  swatch: (color, on) => ({
     display: 'inline-block',
     margin: '.5em',
     height: '2em',
-    width: '6em',
+    width: '2em',
     borderRadius: '2em',
-    border: '1px solid currentColor',
-    backgroundColor: `hsl(${color})`,
-  })
+    backgroundColor: on ? `hsl(${color})` : '#000',
+    boxShadow: on ? `0 2px 3px rgba(0,0,0,.7), 0 0 1em 1px hsla(${color},.7)` : false,
+  }),
+  topControls: {
+    display: 'flex',
+    alignItems: 'center',
+  }
 }
 
 @Radium
@@ -122,7 +126,7 @@ class HueLight extends React.Component {
     let l = light.brightness / 255 * 50 + 25;
     let color = `${h},${s}%,${l}%`;
 
-    return <span style={ style.swatch(color) } />
+    return <span style={ style.swatch(color, light.on) } />
   }
 
   render() {
@@ -170,8 +174,10 @@ class HueLight extends React.Component {
 
     return (
       <div style={ style.HueLight }>
-        <h3>{ this.state.light.name } { this.colorDisplay(this.state.light) }</h3>
-        { onOff }
+        <h3>{ this.state.light.name }</h3>
+        <div style={ style.topControls }>
+         { this.colorDisplay(this.state.light) } { onOff }
+        </div>
         { colorControl }
       </div>
       );

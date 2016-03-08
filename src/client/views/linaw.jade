@@ -9,6 +9,8 @@ html
         margin: 0;
         overflow: hidden;
         -webkit-user-select: none;
+        background: #363636;
+        color: #fff;
       }
       h1,h2,h3,h4 {
         font-weight: lighter;
@@ -18,14 +20,22 @@ html
         align-items: center;
       }
       button {
-        border: 1px solid;
-        padding: 1em;
-        background: none;
-        border-radius: 3px;
-        font-size: .25em 1em;
-        margin: 0 .5em .5em 0;
-        color: currentColor;
+        padding: .5em 1em;
+        margin: 0;
+        min-width: 3em;
         cursor: pointer;
+        border: 0;
+        border-radius: 0;
+        font-size: 1em;
+        text-transform: uppercase;
+        background: rgba(0,0,0,.1);
+        color: currentColor;
+      }
+      button:hover {
+        background: rgba(0,0,0,.2);
+      }
+      button:active {
+        background: rgba(0,0,0,.3);
       }
       *:focus {
         outline: 0;

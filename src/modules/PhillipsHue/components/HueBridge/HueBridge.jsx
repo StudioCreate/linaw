@@ -19,7 +19,7 @@ class HueBridge extends React.Component {
 
     // bind methods
     this.handleLightChange = this.handleLightChange.bind(this);
-
+    this.confirmBridgeLink = this.confirmBridgeLink.bind(this);
     // allow and set initial state
     this.state = {
       lights: {}
@@ -30,9 +30,18 @@ class HueBridge extends React.Component {
    * before the component is mounted start a socket listener
    * after success the lights will be loaded into the state to make this
    * component a standalone module
+   * we also handle fisrt usage here since it requires come server configuration
    */
   componentWillMount() {
     this.props.socket.emit('MountHueBridge');
+    this.props.socket.on('ConnectHueBridge', (connected) => {
+      if (connected) {
+        return
+      }
+      this.setState({
+        prompt: true
+      });
+    });
     this.props.socket.on('HueBridge', (data) => {
       if (!data) {
         return
@@ -57,8 +66,9 @@ class HueBridge extends React.Component {
   }
 
   // unregister socket events before unmounting
-  componentWillUnmount(){
+  componentWillUnmount() {
     this.props.socket.off('HueBridge');
+    this.props.socket.off('ConnectHueBridge');
   }
 
   /**
@@ -97,10 +107,32 @@ class HueBridge extends React.Component {
     return lights;
   }
 
+  confirmBridgeLink() {
+    this.setState({
+      prompt: false
+    });
+    this.props.socket.emit('ConnectHueBridge');
+  }
+
   render() {
+    let connectPrompt;
+    if (this.state.prompt) {
+      connectPrompt = (
+        <div>
+          <h2>Connect to bridge</h2>
+          <p>
+            Click the Link button on your bridge to connect, then click ok within 30 seconds
+          </p>
+          <button onClick={ this.confirmBridgeLink }>
+            ok
+          </button>
+        </div>
+      );
+    }
     return (
       <div>
         <h2>Lights (Phillips hue)</h2>
+        { connectPrompt }
         <div style={ {  display: 'flex'} }>
           { this.getLights(this.state.lights) }
         </div>
