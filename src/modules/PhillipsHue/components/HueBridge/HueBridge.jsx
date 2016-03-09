@@ -19,11 +19,15 @@ class HueBridge extends React.Component {
 
     // bind methods
     this.handleLightChange = this.handleLightChange.bind(this);
+    this.toggleLight = this.toggleLight.bind(this);
     this.confirmBridgeLink = this.confirmBridgeLink.bind(this);
     // allow and set initial state
     this.state = {
       lights: {}
     }
+    this.hueRange = 65535;
+    this.satRange = 254;
+    this.briRange = 254;
   }
 
   /**
@@ -36,17 +40,27 @@ class HueBridge extends React.Component {
     this.props.socket.emit('MountHueBridge');
     this.props.socket.on('ConnectHueBridge', (connected) => {
       if (connected) {
-        return
+        this.setState({
+          prompt: false
+        });
+      } else {
+        this.setState({
+          prompt: true
+        });
       }
-      this.setState({
-        prompt: true
-      });
+
     });
     this.props.socket.on('HueBridge', (data) => {
       if (!data) {
+        this.setState({
+          lights: {}
+        });
         return
       }
       let lights = this.state.lights;
+      if (data[0]) {
+        console.log(data[0].state.hue, data[0].state.sat, data[0].state.bri);
+      }
       data.forEach((light, index) => {
         let state = light.state;
         lights[light.id] = lights[light.id] || {};
@@ -76,17 +90,21 @@ class HueBridge extends React.Component {
    * @param  {Number,String} light  id of the light on the bridge
    * @param  {String}        toggle if set the action will be 'on' on 'off'
    */
-  handleLightChange(light, toggle) {
-    if (toggle) {
-      // toggle is either 'on' or 'off'
-      this.props.socket.emit('HueBridge', light.id, toggle);
-    } else {
-      // for now let's use the 'all' method as implemented in '/src/server/hue.js'
-      this.props.socket.emit('HueBridge', light.id, {
-        type: 'all',
-        val: light
-      });
-    }
+  handleLightChange(id, hsl) {
+    this.props.socket.emit('HueBridge', id, {
+      type: 'hsl',
+      val: hsl
+    });
+  }
+
+  /**
+   * toggle the light on or off
+   * @param  {String,Number} id      id of light to toggle
+   * @param  {String}        action  either 'on' or 'off'
+   */
+  toggleLight(id, action) {
+    console.log(id, action)
+    this.props.socket.emit('HueBridge', id, action);
   }
 
   /**
@@ -99,18 +117,26 @@ class HueBridge extends React.Component {
     for (let light in state) {
       lights.push(
         <HueLight key={ this.state.lights[light].name }
-                  light={ this.state.lights[light] }
+                  id={ this.state.lights[light].id }
+                  name={ this.state.lights[light].name }
+                  on={ this.state.lights[light].on }
+                  h={ this.state.lights[light].hue }
+                  s={ this.state.lights[light].saturation }
+                  l={ this.state.lights[light].brightness }
                   onChange={ this.handleLightChange }
-                  toggle={ this.handleLightChange } />
+                  toggle={ this.toggleLight } />
       );
     }
     return lights;
   }
 
+  /**
+   * confirm that the bridge has been linked
+   */
   confirmBridgeLink() {
-    this.setState({
-      prompt: false
-    });
+    // this.setState({
+    //   prompt: false
+    // });
     this.props.socket.emit('ConnectHueBridge');
   }
 

@@ -3,6 +3,9 @@ import classNames from 'classnames';
 import color from 'color';
 import Radium from 'radium';
 
+// components
+import ColorPicker from '../../../../components/ColorPicker/ColorPicker.jsx'
+
 var style = {
   HueLight: {
     padding: '10px'
@@ -31,15 +34,22 @@ class HueLight extends React.Component {
     this.lightsOn = this.lightsOn.bind(this);
     this.lightsOff = this.lightsOff.bind(this);
     this.setColorState = this.setColorState.bind(this);
+    this.sendColorState = this.sendColorState.bind(this);
+    this.revertColorState = this.revertColorState.bind(this);
     this.colorDisplay = this.colorDisplay.bind(this);
 
     // allow and set initial state
     this.state = {
-      light: props.light
+      on: props.on,
+      h: props.h,
+      s: props.s,
+      l: props.l
     }
 
     // set helpers
     this.hueRange = 65535;
+    this.satRange = 254;
+    this.briRange = 254;
   }
 
   /**
@@ -48,48 +58,55 @@ class HueLight extends React.Component {
    */
   componentWillReceiveProps(newProps) {
     this.setState({
-      light: newProps.light
+      on: newProps.on,
+      h: newProps.h,
+      s: newProps.s,
+      l: newProps.l
     })
   }
 
   /**
-   * set the internal state of the slider values
-   * @param {String}  prop the lightProperty to change
-   * @param {Boolean} send if true send external via sockets
-   *                       this flag will help prevent overload on the bridge
-   * @param {Event}   e    the event that triggered the method
+   * set the internal state of colors
+   * @param {Object}  hsl sets internal color state
    */
-  setColorState(prop, send, e) {
-    let light = this.state.light;
-    let value = e.target.value;
-    light[prop] = value;
+  setColorState(hsl) {
+    this.setState(hsl)
+  }
 
-    // internal
-    this.setState({
-      light: light
-    })
-
-    // external
-    if (send && typeof this.props.onChange === 'function') {
-      this.props.onChange(light);
+  /**
+   * send the internal state of colors to the Bridge
+   * @param {Object}  hsl sends internal color state
+   */
+  sendColorState(hsl) {
+    if (typeof this.props.onChange === 'function') {
+      this.props.onChange(this.props.id, hsl);
     }
+  }
+
+  /**
+   * revert to current light
+   */
+  revertColorState() {
+    this.setState({
+      h: this.props.h,
+      s: this.props.s,
+      l: this.props.l
+    })
   }
 
   /**
    * switch the light on
    */
   lightsOn() {
-    let light = this.state.light;
-    light.on = true;
 
     // internal
     this.setState({
-      light: light
+      on: true
     });
 
     // external
     if (typeof this.props.toggle === 'function') {
-      this.props.toggle(light, 'on');
+      this.props.toggle(this.props.id, 'on');
     }
   }
 
@@ -98,17 +115,14 @@ class HueLight extends React.Component {
    */
   lightsOff() {
 
-    let light = this.state.light;
-    light.on = false;
-
     // internal
     this.setState({
-      light: light
+      on: false
     });
 
     // external
     if (typeof this.props.toggle === 'function') {
-      this.props.toggle(light, 'off');
+      this.props.toggle(this.props.id, 'off');
     }
   }
 
@@ -117,23 +131,24 @@ class HueLight extends React.Component {
    * @param  {Object} light  the light in pretty format
    * @return {Element}       returns the display
    */
-  colorDisplay(light) {
-    // convert color values
-    let h = light.hue / this.hueRange * 360;
-    let s = light.saturation / 255 * 100;
-    // fake the lightness since the Hue bulbs 
-    // always have color if saturated
-    let l = light.brightness / 255 * 50 + 25;
+  colorDisplay() {
+    let h = this.state.h / this.hueRange * 359;
+    let s = this.state.s / this.satRange * 50 + 25;
+    let l = this.state.l / this.briRange * 50 + 25;
+    console.log({
+      h,
+      s,
+      l
+    })
     let color = `${h},${s}%,${l}%`;
-
-    return <span style={ style.swatch(color, light.on) } />
+    return <span style={ style.swatch(color, this.state.on) } />
   }
 
   render() {
     let onOff;
     let colorControl;
 
-    if (this.state.light.on) {
+    if (this.state.on) {
       onOff = (
         <button onClick={ this.lightsOff }>
           off
@@ -141,27 +156,13 @@ class HueLight extends React.Component {
       );
       colorControl = (
         <div>
-          <h3>h</h3>
-          <input type='range'
-                 min={ 0 }
-                 max={ this.hueRange }
-                 value={ this.state.light.hue }
-                 onChange={ this.setColorState.bind(this, 'hue', false) }
-                 onMouseUp={ this.setColorState.bind(this, 'hue', true) } />
-          <h3>s</h3>
-          <input type='range'
-                 min={ 0 }
-                 max={ 255 }
-                 value={ this.state.light.saturation }
-                 onChange={ this.setColorState.bind(this, 'saturation', false) }
-                 onMouseUp={ this.setColorState.bind(this, 'saturation', true) } />
-          <h3>l</h3>
-          <input type='range'
-                 min={ 0 }
-                 max={ 255 }
-                 value={ this.state.light.brightness }
-                 onChange={ this.setColorState.bind(this, 'brightness', false) }
-                 onMouseUp={ this.setColorState.bind(this, 'brightness', true) } />
+          <ColorPicker size={ 200 }
+                       hueRange={ this.hueRange }
+                       satRange={ this.satRange }
+                       briRange={ this.briRange }
+                       onMouseMove={ this.setColorState }
+                       onClick={ this.sendColorState }
+                       onMouseLeave={ this.revertColorState } />
         </div>
       );
     } else {
@@ -174,9 +175,10 @@ class HueLight extends React.Component {
 
     return (
       <div style={ style.HueLight }>
-        <h3>{ this.state.light.name }</h3>
+        <h3>{ this.props.name }</h3>
         <div style={ style.topControls }>
-         { this.colorDisplay(this.state.light) } { onOff }
+          { this.colorDisplay() }
+          { onOff }
         </div>
         { colorControl }
       </div>

@@ -16,7 +16,7 @@ var app = serverConfig.app;
 var port = serverConfig.port;
 var server = serverConfig.server;
 var io = serverConfig.io;
-
+var masterSocket;
 //  set hue vars
 var HueApi = hue.HueApi;
 var lightState = hue.lightState;
@@ -43,7 +43,6 @@ function getHandshake() {
   return new Promise(function(resolve, reject) {
     if (fs.existsSync(clientKey)) {
       hueUserID = fs.readFileSync(clientKey);
-      console.log('found LInAW user on HueBridge: ' + hueUserID);
       resolve(hueUserID);
     } else {
       reject();
@@ -57,11 +56,10 @@ function getHandshake() {
  */
 function storeClientKey(key) {
   console.log('Storing LInAW user: ' + key);
-  if (!fs.existsSync(keyDir)){
+  if (!fs.existsSync(keyDir)) {
     fs.mkdirSync(keyDir);
   }
   fs.writeFileSync(clientKey, key);
-
 }
 
 /**
@@ -87,19 +85,19 @@ function displayUserResult(result) {
 function displayLights(result) {
   // the lights array is the value of the `lights` property
   hueLights = result.lights;
+  console.log('found lights: ', hueLights.length)
 
   // create a state for each light
   hueLights.forEach(function(light, index) {
     state[light.id] = lightState.create()
   });
-
-  // send Socket events after connection
-
-  masterSocket.then(function(socket) {
-    socket.emit('HueBridge', hueLights);
-  }).catch(function(socket) {
-    socket.emit('HueBridge', hueLights);
-  });
+  
+  // ensure socket connection before we proceed
+  withMasterSocket()
+    .then(function(socket) {
+      socket.emit('ConnectHueBridge', hueLights);
+      syncLights(result);
+    });
 }
 
 /**
@@ -129,10 +127,28 @@ function noop() {
  * update lights to sync client with service
  */
 function updateLights() {
+  console.log(hueLights[0].state.bri)
+  hueUserApi = new HueApi(hueBidgeIP, hueUserID);
   hueUserApi.lights()
-    .then(displayLights)
+    .then(syncLights)
     .done();
 }
+
+
+/**
+ * sends the lights to the client and sets server side variable
+ * @param  {Object} result an object containing the lights
+ */
+function syncLights(result) {
+  hueLights = result.lights;
+  // send Socket events with connection
+  console.log(hueLights[0].state.bri)
+  withMasterSocket()
+    .then(function(socket) {
+      socket.emit('HueBridge', hueLights);
+    });
+}
+
 
 /**
  * set the hue value of a speciffic light
@@ -172,8 +188,9 @@ function setBrightness(id, b) {
  * @param {Number, String} id    id of the lamp
  * @param {Object}         light collection of values
  */
-function setHSB(id, light) {
-  hueUserApi.setLightState(id, state[id].hue(light.hue).saturation(light.saturation).brightness(light.brightness))
+function setHSL(id, light) {
+  console.log(id,light)
+  hueUserApi.setLightState(id, state[id].hue(light.h).sat(light.s).bri(light.l))
     .then(updateLights)
     .done();
 }
@@ -243,70 +260,66 @@ function getHueConfig(ip, user) {
  * start promise based connection
  * @promise masterSocket
  */
-var masterSocket = new Promise(function(resolve, reject) {
-  io.on('connection', function(socket) {
-    // test socket event
-    socket.on('test', function(message) {
-      console.log(message)
-    });
+function getMasterSocket() {
+  return new Promise(function(resolve, reject) {
+    io.on('connection', function(socket) {
+      masterSocket = socket;
 
-
-    // get handshake before attempting to connect
-    getHandshake()
-      .then(function() {
-        // connect to bridge and handle Socket events
+      socket.on('HueBridge', function(id, value) {
+        if (!hueLights) { // better safe than sorry
+          return
+        }
+        if (value === 'off') {
+          turnOff(id);
+        } else if (value === 'on') {
+          turnOn(id);
+        } else if (typeof value === 'object') {
+          if (value.type === 'hue') {
+            setHue(id, value.val);
+          } else if (value.type === 'brightness') {
+            setBrightness(id, value.val);
+          } else if (value.type === 'saturation') {
+            setSaturation(id, value.val);
+          } else if (value.type === 'hsl') {
+            setHSL(id, value.val);
+          }
+        }
+      });
+      // sync lights every time the component is mounted
+      socket.on('MountHueBridge', function() {
+        socket.emit('HueBridge', hueLights);
+      });
+      socket.on('ConnectHueBridge', function() {
         hue.nupnpSearch().then(getHueBridge).done();
-
-        socket.emit('lights', hueLights);
-
-        // sync lights every time the component is mounted
-        socket.on('MountHueBridge', function() {
-          socket.emit('HueBridge', hueLights);
-        });
-
-        socket.on('HueBridge', function(id, value) {
-          if (!hueLights) { // better safe than sorry
-            return
-          }
-          if (value === 'off') {
-            turnOff(id);
-          } else if (value === 'on') {
-            turnOn(id);
-          } else if (typeof value === 'object') {
-            if (value.type === 'hue') {
-              setHue(id, value.val);
-            } else if (value.type === 'brightness') {
-              setBrightness(id, value.val);
-            } else if (value.type === 'saturation') {
-              setSaturation(id, value.val);
-            } else if (value.type === 'all') {
-              setHSB(id, value.val);
-            }
-          }
-        });
+      });
+      // get handshake before attempting to connect
+      getHandshake().then(function(hueUserID) {
         resolve(socket);
-      })
-      .catch(function() {
-        console.log('First usage, please click the link button on your HueBridge.');
-        // prompt the user to click the link button
-        // and listen for the connect event
-        socket.on('MountHueBridge', function() {
-          socket.emit('ConnectHueBridge', hueLights);
-          if (hueLights) {
-            hue.nupnpSearch().then(getHueBridge).done();
-          }
-          socket.on('ConnectHueBridge', function() {
-            hue.nupnpSearch().then(getHueBridge).done();
-            getHandshake().then(function() {
-              hue.nupnpSearch().then(getHueBridge).done();
-            });
-          });
-        });
-
+      }).catch(function() {
         reject(socket);
       });
+    });
   });
+}
+
+getMasterSocket().then(function(socket) {
+  console.log('found LInAW user on HueBridge: ' + hueUserID);
+  // connect to bridge
+  hue.nupnpSearch().then(getHueBridge).done();
+}).catch(function(socket) {
+  console.log('First usage, please click the link button on your HueBridge.');
+  // prompt the user to click the link button
+  socket.emit('ConnectHueBridge', hueLights);
 });
 
+function withMasterSocket(){
+  return new Promise(function(resolve, reject){
+    if (masterSocket) {
+      resolve(masterSocket);
+    } else {
+      reject();
+    }
+  });
+}
 
 
